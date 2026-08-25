@@ -1,0 +1,249 @@
+﻿15:49:29  baseline taken - 59 files tracked
+15:49:29  reset only, nothing posted
+15:49:50  crew-watch starting - poll 2s, settle 1s, 59 files [DRY RUN]
+15:49:56  change detected in 1 file(s) - waiting 1s to settle
+15:49:57  crew-watch stopped
+15:50:11  crew-watch starting - poll 2s, settle 1s, 59 files [DRY RUN]
+15:50:14  change detected in 1 file(s) - waiting 1s to settle
+15:50:17  would post:
+ORCHA CHANGED - while @opencode was active (likely author)
+Edited:
+  ui\src\node-shims.d.ts (+2 lines)
+Re-read these before editing the same surface.
+15:50:17  crew-watch stopped
+15:50:32  baseline taken - 59 files tracked
+15:50:32  reset only, nothing posted
+15:50:34  crew-watch starting - poll 2s, settle 2s, 59 files
+15:50:38  change detected in 2 file(s) - waiting 2s to settle
+15:50:41  posted summary (1 edited, 1 added, 0 deleted)
+15:50:41  crew-watch stopped
+15:50:54  baseline taken - 59 files tracked
+15:50:54  reset only, nothing posted
+15:51:24  crew-watch starting - poll 10s, settle 20s, 59 files
+15:51:35  change detected in 3 file(s) - waiting 20s to settle
+15:51:57  posted summary (3 edited, 1 added, 0 deleted)
+15:52:18  change detected in 1 file(s) - waiting 20s to settle
+15:52:39  posted summary (0 edited, 0 added, 1 deleted)
+15:55:05  change detected in 2 file(s) - waiting 20s to settle
+15:55:25  posted summary (1 edited, 1 added, 0 deleted)
+15:55:56  change detected in 2 file(s) - waiting 20s to settle
+15:56:16  posted summary (1 edited, 0 added, 1 deleted)
+16:18:22  change detected in 1 file(s) - waiting 20s to settle
+16:18:46  posted summary (2 edited, 0 added, 0 deleted)
+16:19:03  change detected in 1 file(s) - waiting 20s to settle
+16:19:24  posted summary (1 edited, 0 added, 0 deleted)
+16:33:15  baseline taken - 56 files tracked
+16:33:15  reset only, nothing written
+16:33:39  crew-watch starting - poll 10s, settle 20s, 56 files
+16:33:54  change detected in 1 file(s) - waiting 20s to settle
+16:34:18  logged (1 edited, 0 added, 0 deleted)
+16:34:43  change detected in 1 file(s) - waiting 20s to settle
+16:35:07  logged (1 edited, 0 added, 0 deleted)
+16:35:31  change detected in 1 file(s) - waiting 20s to settle
+16:35:56  logged (1 edited, 0 added, 0 deleted)
+16:45:20  change detected in 2 file(s) - waiting 20s to settle
+16:45:44  logged (2 edited, 0 added, 0 deleted)
+16:46:07  change detected in 1 file(s) - waiting 20s to settle
+16:46:31  logged (1 edited, 0 added, 0 deleted)
+16:46:56  change detected in 1 file(s) - waiting 20s to settle
+16:47:19  logged (1 edited, 0 added, 0 deleted)
+16:48:05  change detected in 1 file(s) - waiting 20s to settle
+16:48:29  logged (1 edited, 0 added, 0 deleted)
+16:54:49  change detected in 1 file(s) - waiting 20s to settle
+16:55:24  logged (2 edited, 1 added, 0 deleted)
+16:55:40  change detected in 1 file(s) - waiting 20s to settle
+16:56:13  logged (2 edited, 0 added, 0 deleted)
+17:21:23  change detected in 2 file(s) - waiting 20s to settle
+17:21:44  logged (2 edited, 0 added, 0 deleted)
+17:21:55  change detected in 1 file(s) - waiting 20s to settle
+17:22:17  logged (1 edited, 0 added, 0 deleted)
+17:23:32  change detected in 1 file(s) - waiting 20s to settle
+17:23:54  logged (2 edited, 0 added, 0 deleted)
+17:24:05  change detected in 1 file(s) - waiting 20s to settle
+17:24:28  logged (2 edited, 0 added, 0 deleted)
+17:24:39  change detected in 1 file(s) - waiting 20s to settle
+17:25:02  logged (1 edited, 0 added, 0 deleted)
+17:25:14  change detected in 1 file(s) - waiting 20s to settle
+17:25:36  logged (1 edited, 0 added, 0 deleted)
+17:25:47  change detected in 1 file(s) - waiting 20s to settle
+17:26:09  logged (1 edited, 0 added, 0 deleted)
+17:29:13  change detected in 1 file(s) - waiting 20s to settle
+17:29:34  logged (3 edited, 0 added, 0 deleted)
+17:29:45  change detected in 1 file(s) - waiting 20s to settle
+17:30:07  logged (1 edited, 0 added, 0 deleted)
+17:31:22  change detected in 3 file(s) - waiting 20s to settle
+17:31:44  logged (3 edited, 0 added, 0 deleted)
+17:31:55  change detected in 1 file(s) - waiting 20s to settle
+17:32:16  logged (1 edited, 0 added, 0 deleted)
+17:32:27  change detected in 1 file(s) - waiting 20s to settle
+17:32:48  logged (1 edited, 0 added, 0 deleted)
+17:33:53  change detected in 1 file(s) - waiting 20s to settle
+17:34:15  logged (3 edited, 0 added, 0 deleted)
+17:34:26  change detected in 1 file(s) - waiting 20s to settle
+17:34:48  logged (1 edited, 0 added, 0 deleted)
+17:35:02  change detected in 1 file(s) - waiting 20s to settle
+17:35:24  logged (1 edited, 0 added, 0 deleted)
+17:36:17  change detected in 2 file(s) - waiting 20s to settle
+17:36:39  logged (2 edited, 0 added, 0 deleted)
+17:36:50  change detected in 1 file(s) - waiting 20s to settle
+17:37:12  logged (1 edited, 0 added, 0 deleted)
+17:37:22  change detected in 1 file(s) - waiting 20s to settle
+17:37:44  logged (1 edited, 0 added, 0 deleted)
+17:39:37  change detected in 1 file(s) - waiting 20s to settle
+17:40:04  logged (1 edited, 0 added, 0 deleted)
+17:40:17  change detected in 1 file(s) - waiting 20s to settle
+17:40:40  logged (1 edited, 0 added, 0 deleted)
+17:40:54  change detected in 1 file(s) - waiting 20s to settle
+17:41:45  logged (1 edited, 0 added, 0 deleted)
+17:42:21  change detected in 1 file(s) - waiting 20s to settle
+17:42:45  logged (1 edited, 0 added, 0 deleted)
+17:42:57  change detected in 1 file(s) - waiting 20s to settle
+17:43:20  logged (2 edited, 0 added, 0 deleted)
+17:43:32  change detected in 1 file(s) - waiting 20s to settle
+17:43:57  logged (1 edited, 0 added, 0 deleted)
+17:44:08  change detected in 1 file(s) - waiting 20s to settle
+17:44:31  logged (1 edited, 0 added, 0 deleted)
+17:44:43  change detected in 2 file(s) - waiting 20s to settle
+17:45:06  logged (2 edited, 0 added, 0 deleted)
+17:45:17  change detected in 1 file(s) - waiting 20s to settle
+17:45:40  logged (1 edited, 0 added, 0 deleted)
+17:46:04  change detected in 1 file(s) - waiting 20s to settle
+17:46:27  logged (2 edited, 0 added, 0 deleted)
+17:46:49  change detected in 1 file(s) - waiting 20s to settle
+17:47:12  logged (1 edited, 0 added, 0 deleted)
+18:10:59  change detected in 2 file(s) - waiting 20s to settle
+18:11:35  logged (2 edited, 0 added, 0 deleted)
+18:20:39  change detected in 2 file(s) - waiting 20s to settle
+18:21:07  logged (2 edited, 0 added, 0 deleted)
+18:28:52  change detected in 1 file(s) - waiting 20s to settle
+18:29:14  logged (1 edited, 0 added, 0 deleted)
+18:32:06  change detected in 1 file(s) - waiting 20s to settle
+18:32:27  logged (1 edited, 0 added, 0 deleted)
+18:43:15  change detected in 1 file(s) - waiting 20s to settle
+18:43:36  logged (1 edited, 0 added, 0 deleted)
+18:54:46  change detected in 1 file(s) - waiting 20s to settle
+18:55:08  logged (1 edited, 0 added, 0 deleted)
+18:55:40  change detected in 2 file(s) - waiting 20s to settle
+18:56:01  logged (2 edited, 0 added, 0 deleted)
+18:56:12  change detected in 2 file(s) - waiting 20s to settle
+18:56:33  logged (2 edited, 0 added, 0 deleted)
+18:58:01  change detected in 1 file(s) - waiting 20s to settle
+18:58:23  logged (1 edited, 0 added, 0 deleted)
+20:27:50  change detected in 1 file(s) - waiting 20s to settle
+20:28:11  logged (2 edited, 0 added, 0 deleted)
+20:28:32  change detected in 1 file(s) - waiting 20s to settle
+20:28:53  logged (1 edited, 0 added, 0 deleted)
+20:31:01  change detected in 1 file(s) - waiting 20s to settle
+20:31:23  logged (2 edited, 0 added, 0 deleted)
+20:55:25  change detected in 1 file(s) - waiting 20s to settle
+20:55:46  logged (2 edited, 0 added, 0 deleted)
+20:58:35  change detected in 1 file(s) - waiting 20s to settle
+20:58:56  logged (2 edited, 0 added, 0 deleted)
+21:01:57  change detected in 1 file(s) - waiting 20s to settle
+21:02:19  logged (2 edited, 0 added, 0 deleted)
+21:02:29  change detected in 1 file(s) - waiting 20s to settle
+21:02:50  logged (1 edited, 0 added, 0 deleted)
+21:03:44  change detected in 1 file(s) - waiting 20s to settle
+21:04:06  logged (1 edited, 0 added, 0 deleted)
+21:06:27  change detected in 1 file(s) - waiting 20s to settle
+21:06:48  logged (1 edited, 0 added, 0 deleted)
+21:11:22  change detected in 2 file(s) - waiting 20s to settle
+21:11:43  logged (2 edited, 0 added, 0 deleted)
+21:11:54  change detected in 1 file(s) - waiting 20s to settle
+21:12:15  logged (1 edited, 0 added, 0 deleted)
+21:12:26  change detected in 1 file(s) - waiting 20s to settle
+21:12:47  logged (1 edited, 0 added, 0 deleted)
+21:14:02  change detected in 1 file(s) - waiting 20s to settle
+21:14:24  logged (1 edited, 0 added, 0 deleted)
+21:18:09  change detected in 1 file(s) - waiting 20s to settle
+21:18:31  logged (1 edited, 0 added, 0 deleted)
+21:18:42  change detected in 1 file(s) - waiting 20s to settle
+21:19:04  logged (2 edited, 0 added, 0 deleted)
+21:19:14  change detected in 1 file(s) - waiting 20s to settle
+21:19:36  logged (1 edited, 0 added, 0 deleted)
+21:19:47  change detected in 2 file(s) - waiting 20s to settle
+21:20:09  logged (2 edited, 0 added, 0 deleted)
+21:30:14  change detected in 1 file(s) - waiting 20s to settle
+21:30:36  logged (1 edited, 0 added, 0 deleted)
+21:41:02  change detected in 2 file(s) - waiting 20s to settle
+21:41:22  logged (2 edited, 0 added, 0 deleted)
+21:45:20  change detected in 2 file(s) - waiting 20s to settle
+21:45:41  logged (2 edited, 0 added, 0 deleted)
+21:46:22  change detected in 1 file(s) - waiting 20s to settle
+21:46:44  logged (1 edited, 1 added, 0 deleted)
+21:46:54  change detected in 2 file(s) - waiting 20s to settle
+21:47:15  logged (2 edited, 0 added, 0 deleted)
+21:47:25  change detected in 1 file(s) - waiting 20s to settle
+21:47:47  logged (1 edited, 0 added, 0 deleted)
+21:47:57  change detected in 1 file(s) - waiting 20s to settle
+21:48:19  logged (1 edited, 0 added, 0 deleted)
+21:48:40  change detected in 1 file(s) - waiting 20s to settle
+21:49:01  logged (1 edited, 0 added, 0 deleted)
+21:49:12  change detected in 1 file(s) - waiting 20s to settle
+21:49:32  logged (1 edited, 0 added, 0 deleted)
+21:50:03  change detected in 2 file(s) - waiting 20s to settle
+21:50:24  logged (2 edited, 0 added, 0 deleted)
+21:50:35  change detected in 1 file(s) - waiting 20s to settle
+21:50:56  logged (1 edited, 0 added, 0 deleted)
+21:51:06  change detected in 1 file(s) - waiting 20s to settle
+21:51:27  logged (1 edited, 0 added, 0 deleted)
+21:51:50  change detected in 1 file(s) - waiting 20s to settle
+21:52:12  logged (1 edited, 0 added, 0 deleted)
+21:52:34  change detected in 1 file(s) - waiting 20s to settle
+21:52:54  logged (1 edited, 0 added, 0 deleted)
+21:53:05  change detected in 1 file(s) - waiting 20s to settle
+21:53:26  logged (1 edited, 0 added, 0 deleted)
+21:53:36  change detected in 1 file(s) - waiting 20s to settle
+21:53:57  logged (1 edited, 0 added, 0 deleted)
+21:58:25  change detected in 2 file(s) - waiting 20s to settle
+21:58:52  logged (2 edited, 0 added, 0 deleted)
+21:59:04  change detected in 1 file(s) - waiting 20s to settle
+21:59:38  logged (1 edited, 0 added, 0 deleted)
+22:00:09  change detected in 1 file(s) - waiting 20s to settle
+22:00:30  logged (1 edited, 0 added, 0 deleted)
+22:16:37  change detected in 1 file(s) - waiting 20s to settle
+22:16:59  logged (1 edited, 0 added, 0 deleted)
+22:17:09  change detected in 2 file(s) - waiting 20s to settle
+22:17:34  logged (2 edited, 0 added, 0 deleted)
+22:17:59  change detected in 1 file(s) - waiting 20s to settle
+22:18:30  logged (1 edited, 0 added, 0 deleted)
+22:27:51  change detected in 1 file(s) - waiting 20s to settle
+22:28:14  logged (2 edited, 0 added, 0 deleted)
+22:28:25  change detected in 2 file(s) - waiting 20s to settle
+22:28:46  logged (2 edited, 0 added, 0 deleted)
+22:36:09  change detected in 1 file(s) - waiting 20s to settle
+22:36:33  logged (2 edited, 0 added, 0 deleted)
+22:36:55  change detected in 1 file(s) - waiting 20s to settle
+22:37:17  logged (2 edited, 0 added, 0 deleted)
+22:37:29  change detected in 1 file(s) - waiting 20s to settle
+22:37:52  logged (2 edited, 0 added, 0 deleted)
+22:38:03  change detected in 1 file(s) - waiting 20s to settle
+22:38:24  logged (1 edited, 0 added, 0 deleted)
+22:41:23  change detected in 2 file(s) - waiting 20s to settle
+22:41:45  logged (2 edited, 0 added, 0 deleted)
+22:42:07  change detected in 2 file(s) - waiting 20s to settle
+22:42:28  logged (2 edited, 0 added, 0 deleted)
+22:42:39  change detected in 1 file(s) - waiting 20s to settle
+22:43:01  logged (1 edited, 0 added, 0 deleted)
+23:00:46  change detected in 1 file(s) - waiting 20s to settle
+23:01:08  logged (2 edited, 0 added, 0 deleted)
+23:01:19  change detected in 1 file(s) - waiting 20s to settle
+23:01:40  logged (1 edited, 0 added, 0 deleted)
+23:03:06  change detected in 1 file(s) - waiting 20s to settle
+23:03:28  logged (2 edited, 0 added, 0 deleted)
+23:06:45  change detected in 1 file(s) - waiting 20s to settle
+23:07:07  logged (2 edited, 0 added, 0 deleted)
+23:07:17  change detected in 1 file(s) - waiting 20s to settle
+23:07:40  logged (1 edited, 0 added, 0 deleted)
+23:10:19  change detected in 1 file(s) - waiting 20s to settle
+23:10:39  logged (1 edited, 0 added, 0 deleted)
+23:14:58  change detected in 1 file(s) - waiting 20s to settle
+23:15:20  logged (1 edited, 0 added, 0 deleted)
+23:16:58  change detected in 1 file(s) - waiting 20s to settle
+23:17:20  logged (3 edited, 0 added, 0 deleted)
+23:17:31  change detected in 2 file(s) - waiting 20s to settle
+23:17:54  logged (2 edited, 0 added, 0 deleted)
+23:18:05  change detected in 2 file(s) - waiting 20s to settle
+23:18:26  logged (2 edited, 0 added, 0 deleted)
+23:18:37  change detected in 1 file(s) - waiting 20s to settle
+23:18:59  logged (1 edited, 0 added, 0 deleted)

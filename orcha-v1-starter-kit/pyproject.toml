@@ -1,0 +1,13 @@
+[project]
+name = "orcha-v1-starter"
+version = "0.1.0"
+description = "Starter runtime for a consumer-facing autonomous AI company builder"
+requires-python = ">=3.11"
+dependencies = ["fastapi>=0.110", "uvicorn[standard]>=0.29", "pydantic>=2.6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "httpx>=0.27", "ruff>=0.4"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

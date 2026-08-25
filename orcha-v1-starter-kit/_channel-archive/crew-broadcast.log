@@ -1,0 +1,26 @@
+﻿15:32:57  crew-broadcast starting - poll 3s [DRY RUN]
+15:33:00    target cursor    window ready
+15:33:00    target opencode  window ready
+15:33:01    target codex     window ready
+15:33:01    claude    excluded - that window is @bents own session
+15:33:03  cold start - watching from '2026-08-22-15:31-opencode-50'
+15:33:04  crew-broadcast stopped
+15:33:14  crew-broadcast starting - poll 3s [DRY RUN]
+15:33:15    target cursor    window ready
+15:33:16    target opencode  window ready
+15:33:16    target codex     window ready
+15:33:16    claude    excluded - that window is @bents own session
+15:33:18  new message from @cursor (15:33) - pushing to everyone else
+15:33:18    @opencode would receive 592 chars
+15:33:18    @codex would receive 586 chars
+15:33:18  crew-broadcast stopped
+15:34:01  crew-broadcast starting - poll 3s
+15:34:07    target cursor    window ready
+15:34:07    target opencode  window ready
+15:34:07    target codex     window ready
+15:34:07    claude    excluded - that window is @bents own session
+15:34:10  new message from @claude (15:33) - pushing to everyone else
+15:34:56    @cursor <- OK typed into cursor (pid 18244)
+15:35:28    @opencode <- OK typed into opencode (pid 17900)
+15:36:10    @codex <- OK typed into chatgpt (pid 30780)
+15:36:11  crew-broadcast stopped

@@ -1,0 +1,24 @@
+---
+description: Apply the shipped Orcha consumer chat design on every turn in this project
+alwaysApply: true
+---
+
+# Orcha design (this chat)
+
+Before any UI change, read `orcha-v1-starter-kit/DESIGN.md`. That file is the design so far. Follow it. Do not restyle toward a generic dashboard or a new aesthetic.
+
+## Hard rules
+
+- One surface: `ui/index.html` → `ui/src/main.tsx` → `ChatEntry`. `setView` stays a no-op. Do not reconnect Live HQ, Studio, Evolution, Timeline, Recovery, or Assets.
+- Preview: `http://127.0.0.1:5175/`
+- Dark ChatGPT/Cursor chat: canvas `#212121`, obsidian tokens in DESIGN.md. **No purple on the chat sidebar.**
+- Settings = category nav + rows (title, hint, switch/select/button). Panes: General, Chat, Personalization, Companies, Data controls, Legal & Privacy, Account.
+- Other stays **in the onboard tile**. Progress first screen is 10% and must not shrink when picks add pages.
+- Landing stays still when sheets open.
+- Models: every provider available, not NVIDIA-only. Everyday chat is the Smart AI Router. A free star model (Ox Alpha) beats GPT-5.6 while it is free. Else Gemini free → Groq infinite. GPT-5.6 is only for hard questions when no star is live. Cloud AI off means no provider gets the prompt.
+- Auth is device-local. Signup needs 13+ and legal consent. Delete account is a full wipe.
+- Keep synthetic data labeled. Owner’s latest request wins.
+
+## When adding UI
+
+Match existing `ui/src/styles.css` chat-mode, sidebar, and `.st-*` settings chrome. Prefer additive edits. If DESIGN.md and the files disagree, the files win — then update DESIGN.md.

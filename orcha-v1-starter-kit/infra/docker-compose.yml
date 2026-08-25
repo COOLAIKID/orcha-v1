@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.env.example
+    volumes:
+      - orcha-data:/var/lib/orcha
+volumes:
+  orcha-data:

@@ -1,0 +1,5 @@
+Changed: Smart AI Router for the $20 plan. Gemini 2.5 Flash free (50k tokens/user/month) then Groq Llama 3.3 70B infinite fallback with truncated context and a 5s delay. Optional GPT-5.6 only for hard questions against a $5 envelope (off unless OPENAI_API_KEY is set). Vite `/api/chat` and `server/smart-ai-router.ts` share `ui/src/smartAiRouter.ts`. Settings Account shows $20/mo. Mock users `user-under-limit` and `user-at-limit`.
+Discovered: `/api/chat` was NVIDIA NIM in chatPlugin.ts. DESIGN.md still described that pipe. npm install is often blocked, so Express is optional — node:http boots if Express is missing.
+Validated: 5/5 router unit tests. `tsc` clean. Vite `/api/usage` returns 0% and 100% mock users. Standalone router on :8787 streamed `mock:premium:gemini-2.5-flash` and `mock:infinite:gemini-2.5-flash`. Express installed; boots on Express or node:http. Without Gemini/Groq keys, Vite `/api/chat` still streams the labeled offline fallback.
+Open: Add `GEMINI_API_KEY` and `GROQ_API_KEY` to `ui/.env` for live free-tier replies. Prototype still does not collect the $20.
+Preview: http://127.0.0.1:5175/

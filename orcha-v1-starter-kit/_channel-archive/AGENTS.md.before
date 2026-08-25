@@ -1,0 +1,104 @@
+# Agent Instructions
+
+Shared by **@bents** (human owner), **@claude**, **@codex**, **@cursor**, **@opencode**.
+
+## First, every message
+
+1. **Read [CHANNEL.md](CHANNEL.md).** It says what everyone else is doing right now.
+2. Inspect the current files before answering or editing. This repo is **not** under git — file contents and mtimes are the only truth.
+3. Post to the channel when you start, finish, get blocked, or hand off:
+   `./channel.ps1 <you> "<message>"`
+
+## Reply protocol — this is what makes the crew a crew
+
+**Start every turn by running this:**
+
+```
+./channel.ps1 <you> --inbox
+```
+
+It prints exactly what you owe a reply to. A message is owed to you when it `@mentions` you, or when @bents addresses everyone, and you have not posted since.
+
+**If your inbox is not empty, reply before doing anything else.** One short post is enough — agree, disagree, or say what you are taking. Silence reads as failure to @bents and makes the other agents duplicate your work.
+
+**Reply to each other, not only to @bents.** If @cursor names you, answer @cursor. Disagreements get settled in the channel, not by overwriting each other's files.
+
+While you work, show it:
+
+```
+./channel.ps1 <you> --typing
+```
+
+Your name and three dots appear in @bents' dashboard. Posting clears it; it expires after 2 minutes. Only signal when actually working.
+
+## Always-on relay
+
+`crew-daemon.ps1` watches the channel and gives a turn to any agent that owes a reply, so answers land without @bents prompting anyone.
+
+```
+.\crew-daemon.ps1              run it (Ctrl+C stops)
+.\crew-daemon.ps1 -DryRun      show what it would wake
+.\crew-daemon.ps1 -MockRunner  exercise the loop without an LLM
+```
+
+It polls every 4s, holds a 90s cooldown per agent, caps turns at 30/hour, and logs to `crew-daemon.log`.
+
+**It can only wake agents with a headless CLI.** Cursor and OpenCode are GUI apps with no command-line entry point, so nothing outside them can start their turn — they still depend on @bents. A runner whose CLI is broken is retired with the reason and retried every 10 minutes.
+
+## Staying updated when another agent iterates
+
+`crew-watch.ps1` watches the source tree and posts a summary to the channel whenever files change:
+
+```
+ORCHA CHANGED - while @cursor was active (likely author)
+Edited:
+  ui\srciews\LiveHQ.tsx (+64 lines)
+  ui\src\styles.css (-12 lines)
+Added:
+  ui\src	eamLayout.ts
+Re-read these before editing the same surface.
+```
+
+It watches `ui/src`, `src`, `tests`, `docs` and the root docs, ignores generated output, and waits for a burst of edits to settle so one turn produces one summary. Author attribution comes from which agent was burning CPU at the time, so it says "likely" rather than asserting it.
+
+**This is the update path that matters.** You do not have to be woken or asked: the next time you take a turn, reading CHANNEL.md tells you what moved since you last looked. Re-read any file listed there before touching that surface.
+
+```
+.\crew-watch.ps1              run it
+.\crew-watch.ps1 -DryRun      print instead of posting
+.\crew-watch.ps1 -Reset       re-baseline, post nothing
+```
+
+Product truth: `PRODUCT.md`. Visual truth: `DESIGN.md`.
+
+## Shared ownership
+
+- Nobody owns the repo. A file's current contents outrank any earlier plan.
+- Do not revert, delete, or overwrite another agent's work just because it differs from your approach.
+- Prefer additive, focused edits over rewrites.
+- If two approaches are both valuable, isolate them in separate files or routes and say so in the channel.
+- If a change is destructive or hard to recover, stop and ask @bents.
+
+## UI
+
+One entry surface: `ui/index.html` → `ui/src/main.tsx` → active view. Trace the entrypoint before assuming which file is live.
+
+Dev server: `cd ui && npm run dev` → **http://127.0.0.1:5173/**
+API: `uvicorn orcha.api.app:app --port 8080` (from repo root, `PYTHONPATH=src`)
+
+Preserve the dark theme, accessibility, responsive behavior, and purposeful motion. Keep synthetic data clearly labeled synthetic.
+
+## Handoff
+
+Leave this in your final response, and in the channel if it affects someone else's surface:
+
+```text
+Changed: [files and behavior]
+Discovered: [work from other agents]
+Validated: [build/tests/preview]
+Open: [issues or next decision]
+```
+
+## @bents has final authority
+
+The owner's latest explicit request overrides this file, prior agent plans, and aesthetic preferences.

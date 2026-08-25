@@ -1,0 +1,13 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { chatPlugin } from './src/chatPlugin'
+import { channelPlugin } from './src/channelPlugin'
+
+export default defineConfig({
+  plugins: [react(), chatPlugin(), channelPlugin()],
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+    allowedHosts: ['.trycloudflare.com'],
+  },
+})

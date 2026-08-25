@@ -1,0 +1,13 @@
+{
+  "name": "orcha-smart-ai-router",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types smart-ai-router.ts",
+    "test": "node --experimental-strip-types --test ../ui/src/smartAiRouter.test.ts"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

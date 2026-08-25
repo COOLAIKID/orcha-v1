@@ -1,0 +1,593 @@
+<title>Orcha Feature Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..600&family=Space+Grotesk:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --paper:#0b0d12;--fill:#11141b;--fill-2:#151923;
+  --line:#232935;--hair:#181d26;
+  --ink:#edf0f5;--muted:#8d96a8;--dim:#646d7c;
+  --violet:#9b8cff;--mint:#62d9b1;--amber:#eab365;--coral:#ef7d83;
+  --wash:radial-gradient(ellipse 90% 70% at 100% 100%,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 34%,transparent 60%);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --sans:'DM Sans','Segoe UI',system-ui,sans-serif;--disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;
+  background-color:var(--paper);background-image:var(--wash);background-attachment:fixed;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:left}
+input{font:inherit}
+:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:5px}
+
+.page{max-width:820px;margin:0 auto;padding:0 28px 160px}
+header{padding:88px 0 40px}
+.brand{font-family:var(--disp);font-size:15px;font-weight:600;color:var(--muted);margin-bottom:34px}
+h1{font-family:var(--disp);font-size:36px;font-weight:500;letter-spacing:-.035em;line-height:1.12;margin:0 0 14px}
+.lede{color:var(--muted);font-size:16px;margin:0;max-width:60ch}
+.prog{margin-top:38px;padding-top:24px;border-top:1px solid var(--hair)}
+.bar{height:3px;background:var(--hair);border-radius:99px;overflow:hidden;display:flex}
+.bar i{height:100%;display:block;transition:width .3s var(--ease)}
+.bar .y{background:var(--mint)}.bar .b{background:var(--amber)}.bar .n{background:var(--coral)}
+.nums{display:flex;gap:26px;margin-top:14px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.nums b{font-family:var(--disp);color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.nums .y b{color:var(--mint)}.nums .b b{color:var(--amber)}.nums .n b{color:var(--coral)}
+
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 4px;align-items:center}
+.fl{height:44px;padding:0 14px;border-radius:8px;font-size:13.5px;color:var(--dim);transition:color .15s,background .15s}
+.fl:hover{color:var(--muted)}.fl.on{color:var(--ink);background:var(--fill)}
+.sp{flex:1}
+.mini{height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.mini:hover{border-color:var(--muted);color:var(--ink)}
+
+.f{border-top:1px solid var(--hair)}
+.f:last-child{border-bottom:1px solid var(--hair)}
+.f-hd{display:flex;align-items:baseline;gap:18px;width:100%;padding:21px 0;transition:opacity .15s}
+.f-hd:hover{opacity:.68}
+.no{font-family:var(--disp);font-size:13px;color:var(--dim);width:26px;flex:none;padding-top:3px;font-variant-numeric:tabular-nums}
+.f-main{flex:1;min-width:0}
+.f-main h2{font-family:var(--disp);font-size:19px;font-weight:500;letter-spacing:-.02em;margin:0;line-height:1.35}
+.f-main p{margin:5px 0 0;color:var(--muted);font-size:14.5px}
+.verdict{font-size:13px;white-space:nowrap;padding-top:4px;color:var(--dim)}
+.verdict.yes{color:var(--mint)}.verdict.but{color:var(--amber)}.verdict.no{color:var(--coral)}
+.f.open .f-main h2{color:var(--violet)}
+.f-bd{display:none;padding:0 0 30px 44px}
+.f.open .f-bd{display:block;animation:fade .22s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.k{font-size:13px;color:var(--dim);margin:20px 0 6px}
+.k:first-child{margin-top:0}
+.v{font-size:14.5px;color:var(--muted)}.v.ink{color:var(--ink)}
+
+/* ---- live demo shell ---- */
+.demo{margin-top:10px;background:var(--fill);border-radius:12px;padding:20px 22px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.035),0 8px 26px rgba(0,0,0,.26)}
+.demo .hint{font-size:12.5px;color:var(--dim);margin:0 0 15px}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.c{height:38px;padding:0 14px;border-radius:8px;border:1px solid var(--line);font-size:13.5px;color:var(--muted);
+  transition:border-color .15s,color .15s}
+.c:hover{border-color:var(--muted);color:var(--ink)}
+.c.p{background:var(--violet);color:#0b0d12;border-color:transparent;font-weight:500}
+.c.p:hover{background:#aa9fff}
+.c.danger{border-color:rgba(239,125,131,.4);color:var(--coral)}
+.c:disabled{opacity:.35;cursor:not-allowed}
+.c.on{border-color:var(--violet);color:var(--violet)}
+
+.out{font-size:14px}
+.l{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--hair)}
+.l:last-child{border-bottom:0}
+.l .t{flex:1;min-width:0;color:var(--muted)}
+.l .s{font-size:13px;white-space:nowrap;color:var(--dim)}
+.s.go{color:var(--mint)}.s.wait{color:var(--amber)}.s.no{color:var(--coral)}.s.vi{color:var(--violet)}
+.log{font-family:var(--disp);font-size:13px;line-height:2;color:var(--muted)}
+.log .g{color:var(--mint)}.log .r{color:var(--coral)}.log .a{color:var(--amber)}.log .v{color:var(--violet)}
+.log div{opacity:0;animation:sl .3s var(--ease) forwards}
+@keyframes sl{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:none}}
+.big{font-family:var(--disp);font-size:21px;font-weight:500;letter-spacing:-.02em;margin:0}
+.big span{color:var(--dim)}
+.trk{height:4px;background:var(--hair);border-radius:99px;margin:12px 0;overflow:hidden}
+.trk i{display:block;height:100%;background:var(--violet);transition:width .4s var(--ease)}
+.trk i.a{background:var(--amber)}.trk i.n{background:var(--coral)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cell{padding:12px 14px;background:var(--fill-2);border-radius:9px;font-size:13.5px;color:var(--muted)}
+.cell b{display:block;color:var(--ink);font-weight:500;font-size:14px;margin-bottom:2px}
+.chip{display:inline-block;font-size:12.5px;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:4px 11px;margin:0 6px 6px 0;cursor:pointer}
+.chip.on{color:var(--violet);border-color:rgba(155,140,255,.45)}
+.chip.off{opacity:.4}
+.dial{display:flex;gap:4px;margin-top:7px;cursor:pointer}
+.dial span{flex:1;height:6px;border-radius:99px;background:var(--hair);transition:background .2s}
+.dial span.on{background:var(--violet)}
+.ring{position:relative;height:220px;border-radius:10px;background:var(--fill-2);overflow:hidden}
+.dot{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--violet);transform:translate(-50%,-50%)}
+.dot.q{background:var(--dim)}
+.dotl{position:absolute;font-size:10.5px;color:var(--dim);transform:translate(-50%,-50%);white-space:nowrap}
+.phone{border:1px solid var(--line);border-radius:14px;padding:14px 12px;transition:width .4s var(--ease);overflow:hidden}
+.phone .hl{font-family:var(--disp);font-size:15px;font-weight:500;line-height:1.25;letter-spacing:-.02em}
+.box{border:1px solid var(--line);border-radius:9px;padding:14px 16px;margin-top:10px}
+.mv{width:14px;height:14px;border-radius:3px;background:var(--violet);display:inline-block;vertical-align:middle}
+
+.dec{margin-top:24px;padding-top:20px;border-top:1px solid var(--hair)}
+.q2{font-size:14px;color:var(--dim);margin-bottom:12px}
+.dbtns{display:flex;gap:8px;flex-wrap:wrap}
+.d{height:44px;padding:0 18px;border-radius:9px;border:1px solid var(--line);font-size:14px;transition:all .15s var(--ease)}
+.d:hover{border-color:var(--muted)}
+.d.on.yes{background:var(--mint);color:#0b0d12;border-color:transparent;font-weight:500}
+.d.on.but{background:var(--amber);color:#0b0d12;border-color:transparent;font-weight:500}
+.d.on.no{background:var(--coral);color:#0b0d12;border-color:transparent;font-weight:500}
+.note{margin-top:12px;display:none}.note.on{display:block}
+.note input{width:100%;height:44px;padding:0 14px;border-radius:9px;border:1px solid var(--line);
+  background:var(--fill-2);color:var(--ink);font-size:14px;outline:0}
+.note input:focus{border-color:var(--amber)}
+.note .h{font-size:12.5px;color:var(--dim);margin-top:7px}
+
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--hair);color:var(--dim);font-size:13.5px}
+pre.exp{margin-top:14px;padding:16px;border-radius:10px;border:1px solid var(--line);background:var(--fill);
+  color:var(--muted);font-family:var(--disp);font-size:13px;line-height:1.9;display:none;white-space:pre-wrap}
+pre.exp.on{display:block}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}}
+@media(max-width:620px){h1{font-size:29px}.f-bd{padding-left:0}.grid2{grid-template-columns:1fr}}
+</style>
+
+<div class="page">
+  <header>
+    <div class="brand">orcha</div>
+    <h1>Feature review</h1>
+    <p class="lede">Twenty-four things Orcha doesn't do yet — each one built here so you can operate it before deciding. These demos are real interfaces running on fake data; the product itself is unchanged.</p>
+    <div class="prog">
+      <div class="bar"><i class="y" id="bY"></i><i class="b" id="bB"></i><i class="n" id="bN"></i></div>
+      <div class="nums">
+        <span class="y"><b id="nY">0</b> yes</span><span class="b"><b id="nB">0</b> yes but</span>
+        <span class="n"><b id="nN">0</b> no</span><span><b id="nP">24</b> undecided</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="tools">
+    <button class="fl on" data-f="all">All</button>
+    <button class="fl" data-f="open">Undecided</button>
+    <button class="fl" data-f="yes">Yes</button>
+    <button class="fl" data-f="but">Yes but</button>
+    <button class="fl" data-f="no">No</button>
+    <span class="sp"></span>
+    <button class="mini" id="expandAll">Open all</button>
+    <button class="mini" id="export">Copy decisions</button>
+    <button class="mini" id="reset">Reset</button>
+  </div>
+
+  <div id="list"></div>
+  <pre class="exp" id="out"></pre>
+
+  <footer>
+    Audited 22 August 2026 against <code>orcha-v1-starter-kit</code>. Every demo runs on invented data and
+    touches nothing real. Decisions live in this browser only.
+  </footer>
+</div>
+
+<script>
+const el=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstElementChild}
+const wait=(ms)=>new Promise(r=>setTimeout(r,ms))
+
+/* ============ 24 LIVE DEMOS ============ */
+const DEMO={
+
+exec(r){r.innerHTML=`<p class="hint">Press Run. This is the loop that does not exist today.</p>
+ <div class="ctl"><button class="c p" data-run>Run the task</button><button class="c" data-reset>Reset</button></div>
+ <div class="out"><div class="l"><span class="t">Implement upload flow</span><span class="s" data-st>queued</span></div></div>
+ <div class="log" data-log style="margin-top:12px"></div>`
+ const st=r.querySelector('[data-st]'),log=r.querySelector('[data-log]')
+ const add=(h)=>log.appendChild(el(`<div>${h}</div>`))
+ r.querySelector('[data-run]').onclick=async e=>{
+  e.target.disabled=true;log.innerHTML='';st.className='s vi';st.textContent='running'
+  add('<span class="v">task.started</span> · engineering · evt-019');await wait(700)
+  add('repo.write → src/upload/handler.ts');await wait(700)
+  add('shell.test → <span class="g">18/18 passing</span>');await wait(700)
+  st.className='s go';st.textContent='done · 2 files'
+  add('<span class="g">task.completed</span> · evt-021');e.target.disabled=false}
+ r.querySelector('[data-reset]').onclick=()=>{st.className='s';st.textContent='queued';log.innerHTML=''}},
+
+persist(r){r.innerHTML=`<p class="hint">Restart the runtime with persistence off, then on.</p>
+ <div class="ctl"><button class="c" data-off>Restart · no persistence</button><button class="c p" data-on>Restart · with SQLite</button></div>
+ <div class="out" data-out></div>`
+ const out=r.querySelector('[data-out]')
+ r.querySelector('[data-off]').onclick=()=>out.innerHTML=
+  `<div class="l"><span class="t">GET /v1/companies/co_b928b037d0</span><span class="s no">404 not found</span></div>
+   <div class="l"><span class="t">Events recovered</span><span class="s no">0</span></div>
+   <div class="l"><span class="t">The company you started is gone</span><span class="s no">unrecoverable</span></div>`
+ r.querySelector('[data-on]').onclick=()=>out.innerHTML=
+  `<div class="l"><span class="t">GET /v1/companies/co_b928b037d0</span><span class="s go">200 ok</span></div>
+   <div class="l"><span class="t">Events recovered</span><span class="s go">42</span></div>
+   <div class="l"><span class="t">Tasks still queued</span><span class="s go">3</span></div>`},
+
+router(r){const S=['Home','Live HQ','Evolution','Timeline','Assets','Recovery','Studio','Onboarding']
+ r.innerHTML=`<p class="hint">Click any destination. Today only three of these resolve.</p>
+ <div class="ctl">${S.map((s,i)=>`<button class="c" data-s="${i}">${s}</button>`).join('')}</div>
+ <div class="box" data-screen><span style="color:var(--dim)">Pick a destination</span></div>`
+ const sc=r.querySelector('[data-screen]')
+ r.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-s]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  sc.innerHTML=`<p class="big" style="font-size:17px">${b.textContent}</p>
+   <p style="margin:6px 0 0;color:var(--muted);font-size:13.5px">Reachable. Today this route falls through to the chat entry.</p>`})},
+
+drawer(r){const A={eng:['Engineering','Implement the upload flow','Next unblocked move toward the first useful slice','2 files changed','repo.write · shell.test','Preview build 0.3.1'],
+ res:['Research','Map competitor onboarding','Users abandon setup when the next step is unclear','synthesis.md','web.search — awaiting approval','18 source notes'],
+ qa:['QA','Waiting on a build','No unblocked acceptance work','None this cycle','None','Idle — not theatrically busy']}
+ r.innerHTML=`<p class="hint">Select an agent. This panel is already written and never mounted.</p>
+ <div class="ctl">${Object.keys(A).map(k=>`<button class="c" data-a="${k}">${A[k][0]}</button>`).join('')}</div>
+ <div class="box" data-p><span style="color:var(--dim)">No agent selected</span></div>`
+ const p=r.querySelector('[data-p]')
+ r.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-a]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  const a=A[b.dataset.a]
+  p.innerHTML=['Doing','Why','Files changed','Tools used','Outcome'].map((k,i)=>
+   `<div class="l"><span class="t"><span style="color:var(--dim);font-size:13px">${k}</span><br>${a[i+1]}</span></div>`).join('')})},
+
+audit(r){let acts=[['Deployed preview 0.3.1','2m'],['Promoted variant A','11m'],['Wrote synthesis.md','24m'],['Regenerated lockfile','41m']]
+ r.innerHTML=`<p class="hint">Undo any action. The record exists today; the undo does not.</p><div class="out" data-o></div>`
+ const o=r.querySelector('[data-o]')
+ const paint=()=>o.innerHTML=acts.length?acts.map((a,i)=>
+  `<div class="l"><span class="t">${a[0]}</span><span class="s">${a[1]}</span><button class="c" style="height:30px;padding:0 10px" data-u="${i}">Undo</button></div>`).join('')
+  :`<div class="l"><span class="t" style="color:var(--dim)">Everything undone. The company is back where it started.</span></div>`
+ const bind=()=>r.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{acts.splice(+b.dataset.u,1);paint();bind()})
+ paint();bind()},
+
+caps(r){r.innerHTML=`<p class="hint">Try each capability. Only the granted ones should get through.</p>
+ <div class="ctl">
+  <button class="c" data-c="repo.write" data-ok="1">repo.write</button>
+  <button class="c" data-c="shell.test" data-ok="1">shell.test</button>
+  <button class="c" data-c="preview.deploy" data-ok="1">preview.deploy</button>
+  <button class="c danger" data-c="external.send" data-ok="0">external.send</button>
+ </div><div class="log" data-log></div>`
+ const log=r.querySelector('[data-log]')
+ r.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+  const ok=b.dataset.ok==='1'
+  log.prepend(el(`<div>${b.dataset.c} → ${ok?'<span class="g">allowed</span>':'<span class="r">blocked</span> · not granted · <span class="a">asking the owner instead</span>'}</div>`))
+  while(log.children.length>5)log.lastChild.remove()})},
+
+spend(r){let spent=2.18
+ r.innerHTML=`<p class="hint">Spend against the ceiling. Big calls should stop and ask.</p>
+ <div class="ctl"><button class="c" data-a="0.40">Small call · $0.40</button><button class="c" data-a="1.40">Medium · $1.40</button>
+  <button class="c" data-a="4.10">Deploy · $4.10</button><button class="c" data-reset>Reset</button></div>
+ <p class="big" data-amt>$2.18 <span>of $25.00 today</span></p><div class="trk"><i data-bar style="width:9%"></i></div>
+ <div class="log" data-log></div>`
+ const amt=r.querySelector('[data-amt]'),bar=r.querySelector('[data-bar]'),log=r.querySelector('[data-log]')
+ const paint=()=>{amt.innerHTML=`$${spent.toFixed(2)} <span>of $25.00 today</span>`
+  bar.style.width=Math.min(100,spent/25*100)+'%';bar.className=spent>20?'n':spent>12?'a':''}
+ r.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+  const c=+b.dataset.a
+  if(c>1){log.prepend(el(`<div>$${c.toFixed(2)} → <span class="a">over the $1.00 threshold · asks you first</span></div>`))}
+  else if(spent+c>25){log.prepend(el(`<div>$${c.toFixed(2)} → <span class="r">refused · would breach the daily ceiling</span></div>`))}
+  else{spent+=c;paint();log.prepend(el(`<div>$${c.toFixed(2)} → <span class="g">allowed</span> · $${spent.toFixed(2)} spent</div>`))}
+  while(log.children.length>5)log.lastChild.remove()})
+ r.querySelector('[data-reset]').onclick=()=>{spent=2.18;paint();log.innerHTML=''}},
+
+approval(r){r.innerHTML=`<p class="hint">Consequential-only: internal work runs, outward actions ask.</p>
+ <div class="ctl"><button class="c" data-t="Write code">Write code</button><button class="c" data-t="Run tests">Run tests</button>
+  <button class="c" data-t="Deploy preview">Deploy preview</button>
+  <button class="c danger" data-t="Send an email" data-gate="1">Send an email</button>
+  <button class="c danger" data-t="Publish an ad" data-gate="1">Publish an ad</button></div>
+ <div class="out" data-o></div>`
+ const o=r.querySelector('[data-o]')
+ r.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+  o.innerHTML=b.dataset.gate
+   ?`<div class="l"><span class="t"><b>${b.dataset.t}</b> leaves the company.</span><span class="s wait">asks first</span></div>
+     <div class="ctl" style="margin:14px 0 0"><button class="c p">Allow once</button><button class="c">Always</button><button class="c">Deny</button></div>`
+   :`<div class="l"><span class="t"><b>${b.dataset.t}</b> is ordinary internal work.</span><span class="s go">proceeds silently</span></div>`})},
+
+vm(r){const C=['no default credentials','outbound network policy loaded','metadata service blocked','secret redaction enabled','process and disk quotas active','audit forwarder healthy','kill switch reachable','preview server isolated']
+ r.innerHTML=`<p class="hint">Run the image checks. Today none of these are checked, because there is no image.</p>
+ <div class="ctl"><button class="c p" data-run>Run checks</button></div><div class="out" data-o>${C.map(c=>`<div class="l"><span class="t">${c}</span><span class="s">not checked</span></div>`).join('')}</div>`
+ r.querySelector('[data-run]').onclick=async e=>{e.target.disabled=true
+  const rows=[...r.querySelectorAll('[data-o] .l')]
+  for(const row of rows){const s=row.querySelector('.s');s.textContent='checking…';await wait(220)
+   s.className='s go';s.textContent='pass'}
+  e.target.disabled=false}},
+
+kill(r){r.innerHTML=`<p class="hint">The control that must exist before agents get shell access.</p>
+ <div class="out" data-o><div class="l"><span class="t">StudyFlow · 4 agents · 3 running tasks</span><span class="s go">running</span></div></div>
+ <div class="ctl" style="margin:16px 0 0"><button class="c danger" data-k>Stop everything</button><button class="c" data-r disabled>Restart</button></div>`
+ const o=r.querySelector('[data-o]'),k=r.querySelector('[data-k]'),rb=r.querySelector('[data-r]')
+ k.onclick=async()=>{k.disabled=true
+  o.innerHTML=`<div class="l"><span class="t">Halting agents…</span><span class="s wait">3 tasks cancelled</span></div>`
+  await wait(600)
+  o.innerHTML=`<div class="l"><span class="t">StudyFlow</span><span class="s no">stopped</span></div>
+   <div class="l"><span class="t">Work preserved · nothing lost</span><span class="s">42 events kept</span></div>`
+  rb.disabled=false}
+ rb.onclick=()=>{rb.disabled=true;k.disabled=false
+  o.innerHTML=`<div class="l"><span class="t">StudyFlow · 4 agents · 3 running tasks</span><span class="s go">running</span></div>`}},
+
+pause(r){let s='running'
+ r.innerHTML=`<p class="hint">The model already has this state. Nothing can set it.</p>
+ <p class="big" data-s>StudyFlow <span>· running</span></p>
+ <div class="ctl" style="margin-top:14px"><button class="c" data-p>Pause</button><button class="c" data-r disabled>Resume</button></div>
+ <div class="out" data-o></div>`
+ const S=r.querySelector('[data-s]'),o=r.querySelector('[data-o]'),p=r.querySelector('[data-p]'),rr=r.querySelector('[data-r]')
+ p.onclick=()=>{s='paused';S.innerHTML='StudyFlow <span>· paused</span>';p.disabled=true;rr.disabled=false
+  o.innerHTML=`<div class="l"><span class="t">Agents stopped mid-cycle. History intact.</span><span class="s wait">paused</span></div>`}
+ rr.onclick=()=>{s='running';S.innerHTML='StudyFlow <span>· running</span>';rr.disabled=true;p.disabled=false
+  o.innerHTML=`<div class="l"><span class="t">Picked up where it left off.</span><span class="s go">running</span></div>`}},
+
+chat(r){r.innerHTML=`<p class="hint">Where the endpoint lives decides whether a deployed build can talk.</p>
+ <div class="ctl"><button class="c" data-m="dev">Dev server</button><button class="c" data-m="prod">Production build</button></div>
+ <div class="out" data-o></div>`
+ const o=r.querySelector('[data-o]')
+ r.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-m]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  o.innerHTML=b.dataset.m==='dev'
+   ?`<div class="l"><span class="t">POST /api/chat · Vite configureServer hook</span><span class="s go">streams</span></div>
+     <div class="l"><span class="t">Model key</span><span class="s wait">read from ui/.env</span></div>`
+   :`<div class="l"><span class="t">POST /api/chat</span><span class="s no">404 · the hook does not exist in a build</span></div>
+     <div class="l"><span class="t">With this feature: POST /v1/chat on the API</span><span class="s go">streams · key stays server-side</span></div>`})},
+
+fs(r){const P=[['/workspaces/studyflow/src/upload.ts',1],['/workspaces/studyflow/README.md',1],['~/Documents/taxes.pdf',0],['/etc/passwd',0],['~/.ssh/id_rsa',0]]
+ r.innerHTML=`<p class="hint">Try to write somewhere. Only the workspace should answer.</p>
+ <div class="ctl">${P.map((p,i)=>`<button class="c ${p[1]?'':'danger'}" data-p="${i}">${p[0].split('/').pop()}</button>`).join('')}</div>
+ <div class="log" data-log></div>`
+ const log=r.querySelector('[data-log]')
+ r.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{
+  const p=P[+b.dataset.p]
+  log.prepend(el(`<div>write ${p[0]} → ${p[1]?'<span class="g">ok</span>':'<span class="r">denied</span> · outside ORCHA_WORKSPACE_ROOT'}</div>`))
+  while(log.children.length>5)log.lastChild.remove()})},
+
+map(r){const D=[['Product',4],['Engineering',6],['Quality',5],['Design',4],['Growth',6],['Data',3],['Business',4]]
+ r.innerHTML=`<p class="hint">Drag the count. Today the layout is four hardcoded CSS positions.</p>
+ <div class="ctl"><button class="c" data-n="4">4 agents</button><button class="c" data-n="12">12</button><button class="c on" data-n="32">32</button></div>
+ <div class="ring" data-ring></div>`
+ const ring=r.querySelector('[data-ring]')
+ const paint=(n)=>{ring.innerHTML=''
+  ring.appendChild(el(`<span class="dot" style="left:50%;top:50%;width:11px;height:11px"></span>`))
+  ring.appendChild(el(`<span class="dotl" style="left:50%;top:calc(50% + 18px);color:var(--violet)">orchestrator</span>`))
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2,R=n>16?86:70
+   ring.appendChild(el(`<span class="dot ${i%5===4?'q':''}" style="left:${50+Math.cos(a)*R/2.2}%;top:${50+Math.sin(a)*R/1.6}%"></span>`))}
+  if(n<=12)D.slice(0,Math.min(7,n)).forEach((d,i)=>{const a=i/Math.min(7,n)*Math.PI*2-Math.PI/2
+   ring.appendChild(el(`<span class="dotl" style="left:${50+Math.cos(a)*40}%;top:${50+Math.sin(a)*52}%">${d[0]}</span>`))})}
+ r.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-n]').forEach(x=>x.classList.remove('on'));b.classList.add('on');paint(+b.dataset.n)})
+ paint(32)},
+
+hire(r){let team=[['Product',2,4],['Engineering',2,6],['Quality',2,5],['Design',2,4],['Growth',1,6],['Data',1,3],['Business',0,4]]
+ let prop=['Security Auditor','Database','Landing Page','Legal']
+ r.innerHTML=`<p class="hint">Approve a hire and watch the company grow into its roster.</p>
+ <div class="out" data-p></div><div class="out" data-t style="margin-top:14px"></div>`
+ const P=r.querySelector('[data-p]'),T=r.querySelector('[data-t]')
+ const paint=()=>{
+  P.innerHTML=prop.length?prop.map((p,i)=>
+   `<div class="l"><span class="t">Orcha wants to hire a <b>${p}</b></span>
+    <button class="c p" style="height:32px;padding:0 12px" data-h="${i}">Hire</button>
+    <button class="c" style="height:32px;padding:0 12px" data-x="${i}">Not yet</button></div>`).join('')
+   :`<div class="l"><span class="t" style="color:var(--dim)">No open proposals.</span></div>`
+  T.innerHTML=team.map(t=>`<div class="l"><span class="t">${t[0]}</span><span class="s ${t[1]?'go':''}">${t[1]} of ${t[2]}</span></div>`).join('')
+  r.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{
+   const i=+b.dataset.h,dept=[6,3,4,6][i]||1;team[dept][1]++;prop.splice(i,1);paint()})
+  r.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{prop.splice(+b.dataset.x,1);paint()})}
+ paint()},
+
+wake(r){let q={Engineering:2,Design:1,Data:1,Product:0,Quality:0,Growth:0,Business:0}
+ r.innerHTML=`<p class="hint">Queue work for a sleeping department and watch it wake.</p>
+ <div class="ctl">${Object.keys(q).map(d=>`<button class="c" data-d="${d}">Queue work · ${d}</button>`).join('')}</div>
+ <div class="out" data-o></div><p class="big" data-c style="margin-top:14px"></p>`
+ const o=r.querySelector('[data-o]'),c=r.querySelector('[data-c]')
+ const paint=()=>{o.innerHTML=Object.entries(q).map(([d,n])=>
+  `<div class="l"><span class="t">${d}</span><span class="s ${n?'go':''}">${n?`awake · ${n} queued`:'asleep'}</span></div>`).join('')
+  const awake=Object.values(q).filter(Boolean).length
+  c.innerHTML=`${awake} of 7 awake <span>· $${(0.62*awake).toFixed(2)} per hour instead of $4.34</span>`}
+ r.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{q[b.dataset.d]++;paint()})
+ paint()},
+
+status(r){r.innerHTML=`<p class="hint">Fire each tier. Only one of them should be allowed to interrupt you.</p>
+ <div class="ctl"><button class="c" data-t="amb">Ambient</button><button class="c" data-t="pro">Progress</button>
+  <button class="c" data-t="att">Attention</button><button class="c" data-t="sum">Summary</button></div>
+ <div class="out" data-o></div>`
+ const o=r.querySelector('[data-o]')
+ const V={amb:['A quiet line on the department card','always · never interrupts',''],
+  pro:['A panel you open when you want it','on demand · never pushed',''],
+  att:['Research needs a capability grant to continue','interrupts you','wait'],
+  sum:['3 meaningful moves while you were away','on return',''] }
+ r.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-t]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  const v=V[b.dataset.t]
+  o.innerHTML=`<div class="l"><span class="t">${v[0]}</span><span class="s ${v[2]}">${v[1]}</span></div>
+   ${b.dataset.t==='att'?'<div class="ctl" style="margin:14px 0 0"><button class="c p">Allow once</button><button class="c">Deny</button></div>':''}`})},
+
+autonomy(r){const D=['Engineering','Design','Growth','Business'];let lv={Engineering:3,Design:2,Growth:1,Business:1}
+ const L=['asks before everything','asks before anything leaves','works freely']
+ r.innerHTML=`<p class="hint">Click a dial to change how much rope that department gets.</p><div data-o></div>`
+ const o=r.querySelector('[data-o]')
+ const paint=()=>o.innerHTML=D.map(d=>`
+  <div style="padding:11px 0;border-bottom:1px solid var(--hair)">
+   <div class="l" style="border:0;padding:0"><span class="t">${d}</span><span class="s ${lv[d]===3?'go':lv[d]===1?'wait':''}">${L[lv[d]-1]}</span></div>
+   <div class="dial" data-d="${d}">${[1,2,3].map(i=>`<span class="${i<=lv[d]?'on':''}" data-l="${i}"></span>`).join('')}</div>
+  </div>`).join('')
+ const bind=()=>r.querySelectorAll('[data-d]').forEach(dl=>dl.querySelectorAll('span').forEach(s=>s.onclick=()=>{
+  lv[dl.dataset.d]=+s.dataset.l;paint();bind()}))
+ paint();bind()},
+
+studio(r){const T={Prompts:'18 versions · 3 proposed, awaiting evaluation',Tools:'12 allowlisted · typed inputs · rate limited',
+ Workflows:'build → verify → learn · promoted 4d ago',Environment:'model routing · 2 proposed changes not applied',
+ Logs:'evt-013 … evt-021 · sequenced · actor attributed',VM:'8 image checks · none currently met',
+ Evaluations:'3h windows · 2 guardrails · rollback target v0.2'}
+ r.innerHTML=`<p class="hint">The seven tabs that print "placeholder rows" today.</p>
+ <div class="ctl">${Object.keys(T).map(t=>`<button class="c" data-t="${t}">${t}</button>`).join('')}</div>
+ <div class="box" data-o><span style="color:var(--dim)">Pick a tab</span></div>`
+ const o=r.querySelector('[data-o]')
+ r.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-t]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  o.innerHTML=`<p class="big" style="font-size:16px">${b.dataset.t}</p><p style="margin:6px 0 0;color:var(--muted);font-size:13.5px">${T[b.dataset.t]}</p>`})},
+
+mobile(r){r.innerHTML=`<p class="hint">Drag the viewport down to 375px. Today the page scrolls sideways there.</p>
+ <div class="ctl"><button class="c" data-w="375">375 · phone</button><button class="c" data-w="600">600</button><button class="c on" data-w="820">820</button></div>
+ <div class="phone" data-ph style="width:100%"><div class="hl">WHAT COULD WE CREATE, BUILD, OR AUTOMATE?</div>
+  <div class="box" style="margin-top:12px;color:var(--dim);font-size:13px">Ask anything…</div></div>
+ <div class="out" data-o style="margin-top:12px"></div>`
+ const ph=r.querySelector('[data-ph]'),o=r.querySelector('[data-o]')
+ r.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-w]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  const w=+b.dataset.w;ph.style.width=Math.min(w,820)+'px'
+  ph.querySelector('.hl').style.fontSize=w<400?'13px':'15px'
+  o.innerHTML=`<div class="l"><span class="t">${w}px viewport</span><span class="s go">fits · no sideways scroll</span></div>
+   ${w===375?'<div class="l"><span class="t">Today at this width</span><span class="s no">scrollWidth 451 · headline 437px</span></div>':''}`})},
+
+motion(r){let on=false
+ r.innerHTML=`<p class="hint">Toggle reduced motion and watch whether the animation actually stops.</p>
+ <div class="ctl"><button class="c" data-t>Reduced motion: off</button></div>
+ <div class="grid2"><div class="cell"><b>CSS animation</b><span data-css style="display:inline-block;margin-top:6px"><span class="mv"></span></span></div>
+ <div class="cell"><b>JavaScript animation</b><span data-js style="display:inline-block;margin-top:6px"><span class="mv"></span></span></div></div>
+ <div class="out" data-o style="margin-top:12px"></div>`
+ const t=r.querySelector('[data-t]'),cs=r.querySelector('[data-css] .mv'),js=r.querySelector('[data-js] .mv'),o=r.querySelector('[data-o]')
+ let raf,x=0
+ const loop=()=>{x=(x+1.4)%60;js.style.transform=`translateX(${x}px)`;raf=requestAnimationFrame(loop)}
+ cs.style.animation='sl 1.2s infinite alternate';loop()
+ t.onclick=()=>{on=!on;t.textContent='Reduced motion: '+(on?'on':'off')
+  cs.style.animation=on?'none':'sl 1.2s infinite alternate'
+  if(on){cancelAnimationFrame(raf);js.style.transform='none'}else loop()
+  o.innerHTML=on
+   ?`<div class="l"><span class="t">CSS stops</span><span class="s go">media query applies</span></div>
+     <div class="l"><span class="t">JavaScript stops too</span><span class="s go">with this feature · 4 of 19 guarded today</span></div>`
+   :''}},
+
+onboard(r){r.innerHTML=`<p class="hint">Two flows exist. Walk each, then pick which survives.</p>
+ <div class="ctl"><button class="c" data-o="a">Onboarding.tsx · 4 steps</button><button class="c" data-o="b">CompanyOnboard.tsx · 5 steps</button></div>
+ <div class="out" data-o></div>`
+ const o=r.querySelector('[data-o]')
+ const A=['Pick an intent card','Write the goal','Add constraints','Review the plan']
+ const B=['Pick an intent card','Choose a company kind','Write the goal','Set bounds','Review the plan · named from your goal']
+ r.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-o]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  const S=b.dataset.o==='a'?A:B
+  o.innerHTML=S.map((s,i)=>`<div class="l"><span class="t">${i+1}. ${s}</span><span class="s">${i===S.length-1?'start':''}</span></div>`).join('')
+   +`<div class="l"><span class="t" style="color:var(--dim)">${b.dataset.o==='a'?'Fewer steps, but never names the company.':'One more step, but drafts the name from your first sentence.'}</span></div>`})},
+
+maint(r){let day=0
+ const D=[['Launch day','Preview 0.3.1 shipped','go'],
+  ['Day 3','Dependency security patch applied · tests green','go'],
+  ['Day 8','Signup conversion fell 0.4% · investigating','wait'],
+  ['Day 9','Cause found: slow first paint on mobile · fixed','go'],
+  ['Day 14','Broken link on the landing page · fixed','go']]
+ r.innerHTML=`<p class="hint">Advance the clock past launch. Today the company has no work after shipping.</p>
+ <div class="ctl"><button class="c p" data-n>Advance</button><button class="c" data-r>Reset</button></div><div class="out" data-o></div>`
+ const o=r.querySelector('[data-o]')
+ const paint=()=>o.innerHTML=day?D.slice(0,day).map(d=>
+  `<div class="l"><span class="t"><span style="color:var(--dim);font-size:13px">${d[0]}</span> · ${d[1]}</span><span class="s ${d[2]}">${d[2]==='go'?'handled':'working'}</span></div>`).join('')
+  :`<div class="l"><span class="t" style="color:var(--dim)">Nothing yet. Press Advance.</span></div>`
+ r.querySelector('[data-n]').onclick=()=>{if(day<D.length)day++;paint()}
+ r.querySelector('[data-r]').onclick=()=>{day=0;paint()}
+ paint()},
+
+host(r){let up=0,t=null
+ r.innerHTML=`<p class="hint">Close the tab. On a sleeping host the company stops; on a real one it does not.</p>
+ <div class="ctl"><button class="c" data-s="sleep">Free tier · sleeps</button><button class="c p" data-s="always">Always-on VM</button></div>
+ <p class="big" data-u>—</p><div class="out" data-o></div>`
+ const U=r.querySelector('[data-u]'),o=r.querySelector('[data-o]')
+ r.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{
+  r.querySelectorAll('[data-s]').forEach(x=>x.classList.remove('on'));b.classList.add('on')
+  clearInterval(t)
+  if(b.dataset.s==='sleep'){U.innerHTML='0m <span>· slept after 15 minutes idle</span>'
+   o.innerHTML=`<div class="l"><span class="t">Work done while you were away</span><span class="s no">none · the runtime was asleep</span></div>`}
+  else{up=0;U.innerHTML='0s <span>· running</span>'
+   o.innerHTML=`<div class="l"><span class="t">Work done while you were away</span><span class="s go">14 tasks · 3 previews</span></div>`
+   t=setInterval(()=>{up++;U.innerHTML=`${up}s <span>· running, tab closed or not</span>`},1000)}})},
+}
+
+/* ============ features ============ */
+const F=[
+ {id:'exec',n:'Task execution',s:'none',one:'The company plans work and then nothing runs it.',what:'A worker that claims a queued task, does it, and emits started / completed / failed.',know:'orchestrator.py creates tasks with status "queued". No code path moves them off it, and no exec primitives exist in src/.'},
+ {id:'persist',n:'Persistence',s:'none',one:'The company forgets itself every restart.',what:'Companies and events in SQLite, so a running company survives a reboot.',know:'State is a dict and a list in memory. Killed the process, restarted, asked for the same company: 404.'},
+ {id:'router',n:'Reconnected navigation',s:'dead',one:'Eight screens exist and none can be reached.',what:'Every destination in the rail actually resolving.',know:'main.tsx line 22 — setView ignores its argument. Only /, /teams and /create resolve.'},
+ {id:'drawer',n:'Agent evidence drawer',s:'dead',one:'Built, never imported.',what:'Doing, Why, Files changed, Tools used, Outcome — per agent.',know:'Overlays.tsx exports AgentDrawer. main.tsx never imports it.'},
+ {id:'audit',n:'Audit trail with undo',s:'part',one:'Two thirds of an audit trail, no way to reverse anything.',what:'Every action recorded, with a visible undo beside it.',know:'The bus emits sequenced, actor-attributed events. No undo, and no UI reads the stream.'},
+ {id:'caps',n:'Capability enforcement',s:'none',one:'The permission model is four strings in a dictionary.',what:'Capabilities checked before a tool runs, not listed in a table.',know:'app.py returns them as a hardcoded list. Nothing reads it.'},
+ {id:'spend',n:'Spend enforcement',s:'none',one:'The budget is a number in a file nobody reads.',what:'Five limits checked before the call rather than reported after it.',know:'ORCHA_MAX_COMPANY_BUDGET_USD=25 appears in .env.example and in no source file.'},
+ {id:'approval',n:'Approval posture',s:'none',one:'Both onboarding screens promise this. Nothing implements it.',what:'Internal work proceeds silently; consequential actions gate.',know:'ORCHA_APPROVAL_MODE=consequential-only is declared and read by nothing.'},
+ {id:'vm',n:'The company VM',s:'none',one:'A security specification with no machine behind it.',what:'A pinned image running agents unprivileged, file tiers mounted separately.',know:'Eight required checks are written down. No image exists; the "VM online" pill is a hardcoded string.'},
+ {id:'kill',n:'Kill switch',s:'none',one:'Required by the VM spec. Does not exist.',what:'A control that stops the company immediately, from outside it.',know:'"Kill switch reachable" is a required check. There is no VM and no endpoint.'},
+ {id:'pause',n:'Pause and resume',s:'part',one:'The state exists in the model. Nothing can set it.',what:'Stopping a company and restarting it without losing history.',know:'CompanyStatus has draft, running, paused. Only start is reachable.'},
+ {id:'chat',n:'Chat that survives a build',s:'none',one:'The chat endpoint only exists in development.',what:'/api/chat moved out of the Vite hook and into the API.',know:'chatPlugin registers inside configureServer, which Vite runs only in dev.'},
+ {id:'fs',n:'Workspace-scoped file access',s:'none',one:'Agents have nowhere they are allowed to write.',what:'A filesystem tool bounded to one workspace root.',know:'ORCHA_WORKSPACE_ROOT is declared for this and read by nothing.'},
+ {id:'map',n:'An org chart that scales',s:'none',one:'The map can only ever draw four agents.',what:'A computed layout so the roster renders at any size.',know:'types.ts hardcodes position as eng | research | design | qa; styles.css places nodes by class name.'},
+ {id:'hire',n:'Hiring as progression',s:'part',one:'The roster exists. Growing into it does not.',what:'The company proposes a hire, you approve, the department fills in.',know:'teams.ts models hired / proposed / available. Approving changes local state only.'},
+ {id:'wake',n:'Departments that wake on work',s:'none',one:'Thirty-two agents cannot all run at once on $25 a day.',what:'Specialists that start when there is work and stop when there is not.',know:'No scheduler exists, because no executor exists.'},
+ {id:'status',n:'Status that knows when to interrupt',s:'part',one:'One of the four status layers exists.',what:'Ambient, progress, attention and summary — matched to stakes.',know:'Department lines cover ambient. No progress panel, no attention interrupt.'},
+ {id:'autonomy',n:'Per-department autonomy',s:'none',one:'Trust is all-or-nothing today.',what:'A dial per department rather than one global setting.',know:'No autonomy setting exists anywhere, at any granularity.'},
+ {id:'studio',n:'Studio internals',s:'part',one:'Seven of ten tabs are placeholders.',what:'Prompts, Tools, Workflows, Environment, Logs, VM and Evaluations with real content.',know:'Studio.tsx renders real tables for three tabs. The rest print "placeholder rows".'},
+ {id:'mobile',n:'A layout that works on a phone',s:'none',one:'The page scrolls sideways on mobile.',what:'The headline and composer fitting inside a phone viewport.',know:'At 375px: scrollWidth 451 against clientWidth 375. The headline box is 437px wide.'},
+ {id:'motion',n:'Motion you can turn off',s:'part',one:'Most of the animation ignores the setting that disables it.',what:'Every animation respecting prefers-reduced-motion, including the JavaScript.',know:'Two CSS blocks and four matchMedia guards against nineteen requestAnimationFrame sites.'},
+ {id:'onboard',n:'One onboarding, not two',s:'dead',one:'Two complete flows exist. Neither is reachable.',what:'A single path from sentence to running company.',know:'Onboarding.tsx is four steps; CompanyOnboard.tsx is five. Both unrouted, and they overlap.'},
+ {id:'maint',n:'Maintenance as a mode',s:'none',one:'The company builds a thing and then has no job.',what:'Keeping what shipped working after launch.',know:'No concept of post-launch work exists in the domain model.'},
+ {id:'host',n:'Somewhere always-on to run',s:'none',one:'The premise requires a machine that never sleeps.',what:'A host where the company keeps running with the tab closed.',know:'PRODUCT.md opens with "always-on company runtime". Everything runs on a laptop dev server.'},
+]
+
+const SL={none:'never built',dead:'written, unreachable',part:'partly there'}
+const VL={yes:'Yes',but:'Yes but',no:'No'}
+const KEY='orcha-feature-review'
+let D=JSON.parse(localStorage.getItem(KEY)||'{}'),filter='all'
+const list=document.getElementById('list')
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(D));counts()}
+
+function counts(){
+ const y=F.filter(f=>D[f.id]?.v==='yes').length,b=F.filter(f=>D[f.id]?.v==='but').length,n=F.filter(f=>D[f.id]?.v==='no').length
+ nY.textContent=y;nB.textContent=b;nN.textContent=n;nP.textContent=F.length-y-b-n
+ bY.style.width=y/F.length*100+'%';bB.style.width=b/F.length*100+'%';bN.style.width=n/F.length*100+'%'}
+
+function mount(wrap,f){
+ const r=wrap.querySelector('.demo');if(!r||r.dataset.live)return
+ r.dataset.live='1';(DEMO[f.id]||(x=>x.innerHTML='<p class="hint">—</p>'))(r)}
+
+function render(){
+ list.innerHTML=F.map((f,i)=>{
+  const d=D[f.id],v=d?.v
+  if(filter==='open'&&v)return''
+  if(['yes','but','no'].includes(filter)&&v!==filter)return''
+  return `<div class="f" data-id="${f.id}">
+   <button class="f-hd"><span class="no">${String(i+1).padStart(2,'0')}</span>
+    <span class="f-main"><h2>${f.n}</h2><p>${f.one}</p></span>
+    <span class="verdict ${v||''}">${v?VL[v]:SL[f.s]}</span></button>
+   <div class="f-bd">
+    <div class="k">What it is</div><div class="v ink">${f.what}</div>
+    <div class="k">How we know it isn't there</div><div class="v">${f.know}</div>
+    <div class="k">Try it</div><div class="demo"></div>
+    <div class="dec"><div class="q2">Build this?</div>
+     <div class="dbtns">
+      <button class="d yes ${v==='yes'?'on':''}" data-v="yes">Yes</button>
+      <button class="d but ${v==='but'?'on':''}" data-v="but">Yes but…</button>
+      <button class="d no ${v==='no'?'on':''}" data-v="no">No</button></div>
+     <div class="note ${v==='but'?'on':''}"><input placeholder="What's the but?" value="${(d?.note||'').replace(/"/g,'&quot;')}">
+      <div class="h">Saved as you type.</div></div>
+    </div></div></div>`}).join('')
+
+ document.querySelectorAll('.f-hd').forEach(b=>b.onclick=()=>{
+  const wrap=b.parentElement,was=wrap.classList.contains('open')
+  wrap.classList.toggle('open',!was)
+  if(!was)mount(wrap,F.find(x=>x.id===wrap.dataset.id))})
+
+ document.querySelectorAll('.d').forEach(b=>b.onclick=e=>{
+  e.stopPropagation()
+  const wrap=b.closest('.f'),id=wrap.dataset.id,v=b.dataset.v
+  D[id]={v,note:D[id]?.note||''}
+  wrap.querySelectorAll('.d').forEach(x=>x.classList.toggle('on',x===b))
+  wrap.querySelector('.note').classList.toggle('on',v==='but')
+  const ver=wrap.querySelector('.verdict');ver.className='verdict '+v;ver.textContent=VL[v]
+  if(v==='but')wrap.querySelector('.note input').focus()
+  save()})
+
+ document.querySelectorAll('.note input').forEach(inp=>{
+  inp.onclick=e=>e.stopPropagation()
+  inp.oninput=()=>{const id=inp.closest('.f').dataset.id;D[id]={v:D[id]?.v||'but',note:inp.value};save()}})
+ counts()}
+
+document.querySelectorAll('.fl').forEach(b=>b.onclick=()=>{
+ filter=b.dataset.f;document.querySelectorAll('.fl').forEach(x=>x.classList.toggle('on',x===b));render()})
+
+document.getElementById('expandAll').onclick=()=>{
+ document.querySelectorAll('.f').forEach(w=>{w.classList.add('open');mount(w,F.find(x=>x.id===w.dataset.id))})}
+
+document.getElementById('export').onclick=()=>{
+ const o=document.getElementById('out')
+ const lines=F.map((f,i)=>{const d=D[f.id];if(!d?.v)return null
+  return `${String(i+1).padStart(2,'0')}  ${VL[d.v].toUpperCase().padEnd(8)}  ${f.n}${d.v==='but'&&d.note?'\n            → '+d.note:''}`}).filter(Boolean)
+ const und=F.filter(f=>!D[f.id]?.v).length
+ o.textContent=lines.length?lines.join('\n')+(und?`\n\n${und} still undecided.`:'\n\nAll 24 decided.'):'Nothing decided yet.'
+ o.classList.add('on');navigator.clipboard?.writeText(o.textContent).catch(()=>{})}
+
+document.getElementById('reset').onclick=()=>{D={};localStorage.removeItem(KEY)
+ document.getElementById('out').classList.remove('on');render()}
+
+render()
+</script>

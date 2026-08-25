@@ -1,0 +1,34 @@
+﻿15:49:29  baseline taken - 59 files tracked
+15:49:29  reset only, nothing posted
+15:49:50  crew-watch starting - poll 2s, settle 1s, 59 files [DRY RUN]
+15:49:56  change detected in 1 file(s) - waiting 1s to settle
+15:49:57  crew-watch stopped
+15:50:11  crew-watch starting - poll 2s, settle 1s, 59 files [DRY RUN]
+15:50:14  change detected in 1 file(s) - waiting 1s to settle
+15:50:17  would post:
+ORCHA CHANGED - while @opencode was active (likely author)
+Edited:
+  ui\src\node-shims.d.ts (+2 lines)
+Re-read these before editing the same surface.
+15:50:17  crew-watch stopped
+15:50:32  baseline taken - 59 files tracked
+15:50:32  reset only, nothing posted
+15:50:34  crew-watch starting - poll 2s, settle 2s, 59 files
+15:50:38  change detected in 2 file(s) - waiting 2s to settle
+15:50:41  posted summary (1 edited, 1 added, 0 deleted)
+15:50:41  crew-watch stopped
+15:50:54  baseline taken - 59 files tracked
+15:50:54  reset only, nothing posted
+15:51:24  crew-watch starting - poll 10s, settle 20s, 59 files
+15:51:35  change detected in 3 file(s) - waiting 20s to settle
+15:51:57  posted summary (3 edited, 1 added, 0 deleted)
+15:52:18  change detected in 1 file(s) - waiting 20s to settle
+15:52:39  posted summary (0 edited, 0 added, 1 deleted)
+15:55:05  change detected in 2 file(s) - waiting 20s to settle
+15:55:25  posted summary (1 edited, 1 added, 0 deleted)
+15:55:56  change detected in 2 file(s) - waiting 20s to settle
+15:56:16  posted summary (1 edited, 0 added, 1 deleted)
+16:18:22  change detected in 1 file(s) - waiting 20s to settle
+16:18:46  posted summary (2 edited, 0 added, 0 deleted)
+16:19:03  change detected in 1 file(s) - waiting 20s to settle
+16:19:24  posted summary (1 edited, 0 added, 0 deleted)

@@ -1,0 +1,25 @@
+---
+description: Orcha $20 Smart AI Router — free-tier infinite fallback, frontier only for hard questions
+alwaysApply: true
+---
+
+# Smart AI Router
+
+Orcha Pro is **$20/month** on a ~$10 VM. About **$5** of GPT-5.6 is for the hardest questions only — unless a **free** model ranks at or above it.
+
+## Routing (do not undo)
+
+1. Live free model ranked ≥ GPT-5.6 (Ox Alpha / `stealth/ox-alpha` today) → **all** work, full context, no delay. Do not spend the $5 envelope.
+2. Else challenging prompt + `OPENAI_API_KEY` + remaining $5 → GPT-5.6. Prototype should run **without** this key.
+3. Under 50,000 premium tokens/user/month → Gemini 2.5 Flash, full prompt and history, no delay.
+4. At/over 50k → Infinite Mode: one-sentence prompt, last **2** turns, **5s** delay, Groq Llama 3.3 70B (else Gemini tiny context).
+
+Catalog: `ui/src/modelCatalog.ts`, refresh OpenRouter every 15 minutes. Engine: `ui/src/smartAiRouter.ts`. Video **creation** is outsourced; Ox Alpha can read video, not emit it.
+
+## Do not
+
+- Put everyday chat on a paid key while a free star model is live.
+- Skip the 5s Infinite Mode throttle after the 50k cap.
+- Claim Orcha generated a video file.
+- Present NVIDIA as the product pipe.
+- Collect the $20 in this prototype (IAP/Play Billing on native later).

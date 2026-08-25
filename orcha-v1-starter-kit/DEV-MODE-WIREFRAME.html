@@ -1,0 +1,629 @@
+<title>Dev Mode Plates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* Deliberately NOT the product's obsidian identity — a wireframe that looks like the
+   finished thing gets mistaken for it. Technical-drawing vernacular instead:
+   cool paper, hairline rules, mono annotation, one blueprint blue. Single theme
+   on purpose; every colour painted explicitly so it holds on any host ground. */
+:root{
+  --paper:#f6f7f9;
+  --plate:#ffffff;
+  --ink:#15181d;
+  --ink-2:#4a515e;
+  --ink-3:#818997;
+  --hair:#ccd2dc;
+  --hair-2:#e3e7ed;
+  --blue:#2a5fd0;
+  --blue-soft:#e8eefc;
+  --warn:#b4622a;
+  --dead:#a8748a;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.sheet{max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,44px)}
+
+/* ---- masthead ---- */
+.masthead{padding:clamp(44px,7vw,86px) 0 34px;border-bottom:2px solid var(--ink)}
+.masthead .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.masthead h1{font-size:clamp(30px,5vw,52px);font-weight:600;letter-spacing:-.025em;margin:12px 0 0;line-height:1.05}
+.masthead p{color:var(--ink-2);max-width:62ch;margin:16px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.legend i{font-style:normal;display:inline-flex;align-items:center;gap:7px}
+.swatch{width:22px;height:0;border-top:2px solid var(--hair)}
+.swatch.solid{border-top-style:solid;border-color:var(--ink)}
+.swatch.dash{border-top-style:dashed;border-color:var(--ink-3)}
+.swatch.dead{border-top-style:dashed;border-color:var(--dead)}
+
+/* ---- plates ---- */
+.plate{margin:clamp(40px,6vw,72px) 0 0;padding-top:26px;border-top:1px solid var(--hair)}
+.plate-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:6px}
+.plate-no{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.14em;color:var(--blue)}
+.plate-head h2{font-size:23px;font-weight:600;letter-spacing:-.015em;margin:0}
+.plate-file{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.plate-note{color:var(--ink-2);max-width:74ch;margin:0 0 20px;font-size:14.5px}
+
+.status{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 8px;border:1px solid var(--hair);border-radius:3px;color:var(--ink-2);white-space:nowrap}
+.status.dead{color:var(--dead);border-color:var(--dead)}
+.status.none{color:var(--warn);border-color:var(--warn)}
+
+/* ---- the drawing canvas ---- */
+.wf{background:var(--plate);border:1px solid var(--hair);border-radius:4px;padding:clamp(12px,2vw,22px);overflow-x:auto}
+.wf-inner{min-width:660px}
+
+.box{border:1px solid var(--ink);border-radius:3px;background:var(--plate)}
+.box.soft{border-color:var(--hair)}
+.box.ghost{border-style:dashed;border-color:var(--ink-3);background:transparent}
+.box.dead{border-style:dashed;border-color:var(--dead)}
+.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);padding:6px 9px 0}
+.pad{padding:9px}
+.stack{display:grid;gap:8px}
+.row{display:flex;gap:8px}
+.grow{flex:1}
+.ctr{display:grid;place-items:center;text-align:center}
+
+.ph{height:9px;border-radius:2px;background:var(--hair-2)}
+.ph.w80{width:80%}.ph.w60{width:60%}.ph.w45{width:45%}.ph.w30{width:30%}
+.ph.tall{height:34px}
+
+.chip{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border:1px solid var(--hair);border-radius:999px;color:var(--ink-2)}
+.chip.on{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+.chip.block{border-color:var(--warn);color:var(--warn)}
+
+.btn{font-family:var(--mono);font-size:11px;padding:6px 12px;border:1px solid var(--ink);border-radius:3px;display:inline-block;background:var(--plate)}
+.btn.pri{background:var(--ink);color:var(--plate)}
+.btn.off{border-color:var(--hair);color:var(--ink-3)}
+
+.t{font-size:12.5px;color:var(--ink-2)}
+.t b{color:var(--ink);font-weight:600}
+.mono{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+
+/* app frame */
+.frame{display:grid;grid-template-columns:190px 1fr;gap:10px}
+.rail{border:1px solid var(--ink);border-radius:3px;padding:10px;display:grid;gap:7px;align-content:start}
+.nav{font-family:var(--mono);font-size:11.5px;padding:5px 8px;border-radius:3px;color:var(--ink-2);border:1px solid transparent}
+.nav.sel{border-color:var(--ink);color:var(--ink);background:var(--paper)}
+.topbar{border:1px solid var(--ink);border-radius:3px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* live hq map */
+.map{position:relative;height:290px;border:1px dashed var(--ink-3);border-radius:3px}
+.node{position:absolute;border:1px solid var(--ink);border-radius:3px;background:var(--plate);padding:8px 10px;width:132px}
+.node .n{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.node .s{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.node.mid{left:50%;top:50%;transform:translate(-50%,-50%);border-width:2px;width:150px}
+.node.tl{left:14px;top:14px}.node.tr{right:14px;top:14px}
+.node.bl{left:14px;bottom:14px}.node.br{right:14px;bottom:14px}
+.edge{position:absolute;border-top:1px dashed var(--ink-3)}
+.elbl{position:absolute;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);background:var(--plate);padding:0 4px}
+
+/* annotation */
+.notes{margin-top:16px;display:grid;gap:7px}
+.note{display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:baseline;font-size:13.5px;color:var(--ink-2)}
+.note .m{font-family:var(--mono);font-size:10.5px;color:var(--blue);border:1px solid var(--blue);border-radius:2px;padding:0 5px;line-height:1.5}
+.note b{color:var(--ink);font-weight:600}
+
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:10px}
+
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--hair-2)}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+td.mono{font-family:var(--mono);font-size:11.5px}
+
+footer{margin:70px 0 60px;padding-top:22px;border-top:1px solid var(--hair);color:var(--ink-3);font-size:13px}
+a{color:var(--blue)}
+a:focus-visible,.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+</style>
+
+<div class="sheet">
+
+<header class="masthead">
+  <div class="kicker">Orcha · wireframe plates · dev mode</div>
+  <h1>Dev mode, drawn</h1>
+  <p>
+    Every surface named in <code>DEV-MODE.md</code>, as structure only. These are drawings of what goes
+    where and what it answers — not visual design. The product's obsidian identity lives in
+    <code>DESIGN.md</code>; nothing here should be read as a proposed look.
+  </p>
+  <div class="legend">
+    <i><span class="swatch solid"></span> exists in code</i>
+    <i><span class="swatch dash"></span> region / container</i>
+    <i><span class="swatch dead"></span> written but unreachable</i>
+    <i><span class="status none">none</span> never built</i>
+  </div>
+</header>
+
+<!-- 01 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 01</span>
+    <h2>The shell</h2>
+    <span class="plate-file">components/Shell.tsx</span>
+    <span class="status">exists</span>
+  </div>
+  <p class="plate-note">The frame every dev-mode surface sits in: navigation rail, company switcher, status bar, and the mode toggle that swaps altitude without swapping app.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="frame">
+      <div class="rail">
+        <div class="mono" style="font-weight:600">orcha</div>
+        <div class="box soft pad" style="margin:4px 0">
+          <div class="mono" style="font-size:10px;color:var(--ink-3)">COMPANY</div>
+          <div class="t"><b>StudyFlow</b></div>
+        </div>
+        <div class="nav sel">Company home</div>
+        <div class="nav">Live HQ</div>
+        <div class="nav">Evolution</div>
+        <div class="nav">Assets</div>
+        <div class="nav">Timeline</div>
+        <div class="nav">Recovery</div>
+        <div style="border-top:1px solid var(--hair);margin:6px 0;padding-top:8px">
+          <div class="mono" style="font-size:10px;color:var(--ink-3);margin-bottom:5px">INSPECT-FIRST</div>
+          <div class="nav">Orcha Studio</div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="topbar">
+          <div class="mono">StudyFlow / <b style="color:var(--ink)">Company home</b></div>
+          <div class="row" style="align-items:center">
+            <span class="chip">runtime healthy</span>
+            <span class="chip">VM online</span>
+            <span class="chip">$2.18 / $25</span>
+            <span class="chip on">Dev mode</span>
+          </div>
+        </div>
+        <div class="box ghost ctr" style="height:210px">
+          <div class="mono">ACTIVE SURFACE</div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Mode toggle lives in the status bar</b>, not in settings. Switching is a glance-level action, and the same toggle already ships in <code>Teams.tsx</code>.</span></div>
+    <div class="note"><span class="m">B</span><span><b>Spend is always visible</b> in the bar — dollars against the ceiling, never credits.</span></div>
+    <div class="note"><span class="m">C</span><span>Studio sits below a divider labelled <i>inspect-first</i> so it never reads as the home.</span></div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 02</span>
+    <h2>Live HQ — the orchestration map</h2>
+    <span class="plate-file">views/LiveHQ.tsx</span>
+    <span class="status dead">written · unrouted</span>
+  </div>
+  <p class="plate-note">Orchestrator centre, specialists around it, every edge a recorded event type. Selecting a node opens the evidence drawer (Plate 08).</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="split">
+      <div class="box soft">
+        <div class="lbl">01 · Live HQ map</div>
+        <div class="pad">
+          <div class="map">
+            <div class="edge" style="top:38%;left:22%;width:18%;transform:rotate(18deg)"></div>
+            <div class="edge" style="top:38%;right:22%;width:18%;transform:rotate(-18deg)"></div>
+            <div class="edge" style="top:62%;left:22%;width:18%;transform:rotate(-18deg)"></div>
+            <div class="edge" style="top:62%;right:22%;width:18%;transform:rotate(18deg)"></div>
+            <span class="elbl" style="top:31%;left:27%">dispatch</span>
+            <span class="elbl" style="top:31%;right:27%">message</span>
+            <span class="elbl" style="top:66%;left:27%">artifact</span>
+            <span class="elbl" style="top:66%;right:27%">dependency</span>
+            <div class="node mid ctr"><div><div class="n">Orchestrator</div><div class="s">coordinating next move</div><div class="s">evt-018</div></div></div>
+            <div class="node tl"><div class="n">Engineering</div><div class="s">busy · upload flow</div></div>
+            <div class="node tr"><div class="n">Research</div><div class="s">busy · competitors</div></div>
+            <div class="node bl"><div class="n">Design</div><div class="s">busy · variants</div></div>
+            <div class="node br"><div class="n">QA</div><div class="s">idle · awaiting build</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="box soft">
+        <div class="lbl">02 · While you were away</div>
+        <div class="pad stack">
+          <div class="t"><b>3 meaningful moves</b> · since last-seen cursor</div>
+          <div class="box ghost pad stack" style="gap:6px">
+            <div class="row" style="justify-content:space-between"><span class="mono">2m</span><span class="t">Preview deployed</span><span class="mono">evt-18</span></div>
+            <div class="row" style="justify-content:space-between"><span class="mono">11m</span><span class="t">Experiment started</span><span class="mono">evt-17</span></div>
+            <div class="row" style="justify-content:space-between"><span class="mono">24m</span><span class="t">Signal added to memory</span><span class="mono">evt-16</span></div>
+            <div class="row" style="justify-content:space-between"><span class="mono">41m</span><span class="t">Build recovered</span><span class="mono">evt-15</span></div>
+          </div>
+          <div><span class="btn">Open full timeline</span></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Idle agents render idle.</b> QA shows "awaiting build" rather than fake activity — the codebase already calls this out as <i>not theatrically busy</i>.</span></div>
+    <div class="note"><span class="m">B</span><span><b>Blocker:</b> node positions are four hardcoded CSS classes and four static edges. Rendering N agents needs a computed layout before this plate scales past four.</span></div>
+    <div class="note"><span class="m">C</span><span>Event ids stay visible here and are stripped in consumer mode.</span></div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 03</span>
+    <h2>Evolution — measured variants</h2>
+    <span class="plate-file">views/Evolution.tsx</span>
+    <span class="status dead">written · unrouted</span>
+  </div>
+  <p class="plate-note">The surface that makes self-improvement legible. Promotion is policy-gated; rollback never is.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="split">
+      <div class="box soft">
+        <div class="lbl">01 · Experiment tree</div>
+        <div class="pad stack">
+          <div class="box ghost pad"><div class="t"><b>Baseline · v0.2</b> — 3.8% completion · keep as rollback target</div></div>
+          <div class="box pad" style="border-color:var(--blue)"><div class="t"><b>Variant A · v0.3</b> — 4.6% completion · recommend promote</div></div>
+          <div class="box ghost pad"><div class="t"><b>Variant B · v0.3b</b> — 3.1% completion · retired</div></div>
+        </div>
+      </div>
+      <div class="box soft">
+        <div class="lbl">02 · Variant detail</div>
+        <div class="pad stack">
+          <div class="t"><b>Variant A</b> — clearer outcome language, one fewer setup step.</div>
+          <div class="grid2">
+            <div class="box ghost pad"><div class="mono" style="font-size:10px">METRIC</div><div class="t">4.6% completion</div></div>
+            <div class="box ghost pad"><div class="mono" style="font-size:10px">CONFIDENCE</div><div class="t">measured · 3h window</div></div>
+            <div class="box ghost pad"><div class="mono" style="font-size:10px">COST</div><div class="t">$0.91 / 100 sessions</div></div>
+            <div class="box ghost pad"><div class="mono" style="font-size:10px">RELIABILITY</div><div class="t">99.4% healthy</div></div>
+          </div>
+          <div class="row"><span class="btn pri">Promote</span><span class="btn">Roll back</span></div>
+          <div class="mono" style="color:var(--warn)">Promote → policy check. Rollback → never gated.</div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Consumer mode shows one line of this</b> — "testing a clearer first screen" — and keeps the tree here.</span></div>
+    <div class="note"><span class="m">B</span><span>Promote opens the approval gate (Plate 09). Rollback executes immediately by design.</span></div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 04</span>
+    <h2>Company home &amp; Timeline</h2>
+    <span class="plate-file">views/CompanyHome.tsx · views/Timeline.tsx</span>
+    <span class="status dead">written · unrouted</span>
+  </div>
+  <p class="plate-note">The operator dashboard, and the "what changed since I looked" digest. Nine regions is correct for dev mode and wrong for the consumer home.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="grid3">
+      <div class="box soft pad"><div class="mono" style="font-size:10px">01 OBJECTIVE</div><div class="t"><b>Ship the first useful slice</b></div><div class="ph w80" style="margin-top:6px"></div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">02 PROGRESS</div><div class="t"><b>18%</b> · milestone 1 of 4</div><div class="ph w30" style="margin-top:6px;background:var(--blue)"></div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">03 ACTIVE TEAM</div><div class="t">EN · RS · DS busy, QA idle</div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">04 LIVE HQ</div><div class="t">Orchestrator + 4 roles</div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">05 EXPERIMENTS</div><div class="t">3 variants · A recommended</div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">06 RESULTS</div><div class="t">Preview 0.3.1 · acceptance 18/18</div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">07 ASSETS</div><div class="t">5 artifacts across 3 tiers</div></div>
+      <div class="box soft pad" style="border-color:var(--warn)"><div class="mono" style="font-size:10px">08 COST</div><div class="t"><b>$2.18</b> of $25 today</div><div class="ph w30" style="margin-top:6px;background:var(--warn)"></div></div>
+      <div class="box soft pad"><div class="mono" style="font-size:10px">09 TIMELINE</div><div class="t">3 moves away · 2h 18m recorded</div></div>
+    </div>
+    <div class="box soft" style="margin-top:10px">
+      <div class="lbl">Timeline · while you were away</div>
+      <div class="pad grid3" style="gap:8px">
+        <div class="box ghost pad"><div class="t"><b>Shipped previews</b> 1</div></div>
+        <div class="box ghost pad"><div class="t"><b>Completed tasks</b> 1</div></div>
+        <div class="box ghost pad"><div class="t"><b>Failures repaired</b> 1</div></div>
+        <div class="box ghost pad"><div class="t"><b>Experiments decided</b> 1</div></div>
+        <div class="box ghost pad"><div class="t"><b>New questions</b> 1</div></div>
+        <div class="box ghost pad"><div class="t"><b>Next actions</b> QA after next preview</div></div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Region 08 is the spend ceiling</b> and is the one region that should also appear, unchanged, in consumer mode.</span></div>
+    <div class="note"><span class="m">B</span><span>Timeline is scoped to a <b>last-seen cursor</b>, not "recent" — it answers what changed since <i>you</i> looked.</span></div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 05</span>
+    <h2>Recovery — how a failure was repaired</h2>
+    <span class="plate-file">views/Recovery.tsx</span>
+    <span class="status dead">written · unrouted</span>
+  </div>
+  <p class="plate-note">Most agent products hide failures. Showing the repair is what makes autonomy credible.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="stack">
+      <div class="row" style="gap:0;align-items:stretch">
+        <div class="box soft pad grow"><div class="mono" style="color:var(--warn)">T+0 · FAILURE RECORDED</div><div class="t">Build 0.3.0 failed — dependency mismatch in lockfile. <span class="mono">evt-12</span></div></div>
+      </div>
+      <div class="box soft pad"><div class="mono">T+4m · DIAGNOSIS</div><div class="t">Orchestrator compared last green build, isolated a transitive version pin.</div></div>
+      <div class="box soft pad"><div class="mono">T+11m · REPAIR ATTEMPT</div><div class="t">Engineering regenerated the lockfile, reran the acceptance suite.</div></div>
+      <div class="box pad" style="border-color:var(--blue)"><div class="mono" style="color:var(--blue)">T+18m · RETRY SUCCEEDED</div><div class="t">Preview 0.3.1 healthy. <b>Rollback target remains 0.2.</b></div></div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span>The <b>rollback target is named at every step</b>, so the operator always knows the escape hatch without hunting for it.</span></div>
+    <div class="note"><span class="m">B</span><span>Consumer mode collapses this whole plate to one sentence: "Fixed a problem with the build."</span></div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 06</span>
+    <h2>Assets — the file tier boundary</h2>
+    <span class="plate-file">views/Assets.tsx</span>
+    <span class="status dead">written · unrouted</span>
+  </div>
+  <p class="plate-note">A security boundary drawn as a table. Local Only never enters the VM at all.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="box soft">
+      <div class="lbl">Artifacts by tier</div>
+      <div class="pad">
+        <table>
+          <thead><tr><th>Artifact</th><th>Tier</th><th>Readable by VM agents</th><th>Updated</th></tr></thead>
+          <tbody>
+            <tr><td>Preview build 0.3.1</td><td class="mono">Shareable</td><td class="mono">yes</td><td class="mono">2m</td></tr>
+            <tr><td>Research synthesis · 18 sources</td><td class="mono">Company Vault</td><td class="mono">yes</td><td class="mono">today</td></tr>
+            <tr><td>Onboarding experiment brief</td><td class="mono">Company Vault</td><td class="mono">yes</td><td class="mono">today</td></tr>
+            <tr><td>Owner notes.docx</td><td class="mono" style="color:var(--warn)">Local Only</td><td class="mono" style="color:var(--warn)">NO — never mounted</td><td class="mono">yesterday</td></tr>
+            <tr><td>Company memory · 42 entries</td><td class="mono">Company Vault</td><td class="mono">yes</td><td class="mono">today</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Local Only is enforced by mount, not by UI.</b> <code>VM_IMAGE_NOTES.md</code>: keep Local Only outside the VM entirely; mount Vault and Shareable separately.</span></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 07</span>
+    <h2>Studio — the internals</h2>
+    <span class="plate-file">views/Studio.tsx</span>
+    <span class="status dead">written · unrouted · 7 of 10 tabs are placeholders</span>
+  </div>
+  <p class="plate-note">Ten tabs, inspect-first. Reading is free; changing is proposed and gated. The disabled "Propose change" button is the design, not an unfinished state.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="box soft">
+      <div class="pad row" style="flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--hair)">
+        <span class="chip on">Agents</span><span class="chip">Prompts</span><span class="chip">Tools</span>
+        <span class="chip">Workflows</span><span class="chip">Files</span><span class="chip">Environment</span>
+        <span class="chip">Permissions</span><span class="chip">Logs</span><span class="chip">VM</span><span class="chip">Evaluations</span>
+      </div>
+      <div class="pad grid2">
+        <div class="box ghost pad">
+          <div class="mono" style="font-size:10px">PERMISSIONS TAB</div>
+          <table style="margin-top:6px">
+            <tbody>
+              <tr><td class="mono">repo.write</td><td class="mono">allowed</td></tr>
+              <tr><td class="mono">shell.test</td><td class="mono">allowed</td></tr>
+              <tr><td class="mono">preview.deploy</td><td class="mono">allowed</td></tr>
+              <tr><td class="mono" style="color:var(--warn)">external.send</td><td class="mono" style="color:var(--warn)">blocked</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="box ghost pad">
+          <div class="mono" style="font-size:10px">VM TAB</div>
+          <div class="stack" style="margin-top:6px;gap:5px">
+            <div class="t">Unprivileged user · quotas active</div>
+            <div class="t">Outbound network policy loaded</div>
+            <div class="t">Metadata service blocked</div>
+            <div class="t">Secret redaction enabled</div>
+            <div class="t">Audit forwarder healthy</div>
+            <div class="t"><b>Kill switch reachable</b></div>
+            <div class="mono" style="color:var(--warn);margin-top:4px">SPEC ONLY — no VM exists</div>
+          </div>
+        </div>
+      </div>
+      <div class="pad row" style="border-top:1px solid var(--hair);align-items:center">
+        <span class="btn off">Propose change</span>
+        <span class="mono">gated until evaluation and policy pass</span>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b><code>external.send</code> stays blocked by default permanently.</b> It is the line separating this from an unbounded agent.</span></div>
+    <div class="note"><span class="m">B</span><span>The VM tab is a <b>checklist of requirements</b>, not a status readout, until an image exists. Today the "VM online" pill is a hardcoded string.</span></div>
+    <div class="note"><span class="m">C</span><span>Logs is the raw event stream — the same events consumer mode renders as sentences.</span></div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 08</span>
+    <h2>Agent drawer — the evidence panel</h2>
+    <span class="plate-file">components/Overlays.tsx</span>
+    <span class="status dead">written · never mounted</span>
+  </div>
+  <p class="plate-note">"This drawer is evidence, not a chat." The explainable-rationale pattern, already built and never imported.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="row">
+      <div class="box ghost grow ctr" style="min-height:250px"><div class="mono">DIMMED — Live HQ behind</div></div>
+      <div class="box" style="width:330px">
+        <div class="pad row" style="justify-content:space-between;align-items:center;border-bottom:1px solid var(--hair)">
+          <span class="mono" style="font-weight:600">ENGINEERING</span><span class="btn off">Close</span>
+        </div>
+        <div class="pad stack">
+          <div class="box ghost pad"><div class="mono" style="font-size:10px">DOING</div><div class="t">Implement upload flow</div></div>
+          <div class="box ghost pad"><div class="mono" style="font-size:10px">WHY</div><div class="t">Next unblocked move toward first useful slice</div></div>
+          <div class="box ghost pad"><div class="mono" style="font-size:10px">FILES CHANGED</div><div class="t">2 files</div></div>
+          <div class="box ghost pad"><div class="mono" style="font-size:10px">TOOLS USED</div><div class="t">repo.write · shell.test</div></div>
+          <div class="box ghost pad"><div class="mono" style="font-size:10px">OUTCOME</div><div class="t">Preview build 0.3.1</div></div>
+          <div><span class="btn">Open in Studio</span></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Why comes second, right after Doing.</b> Intent before mechanics is what separates evidence from a log.</span></div>
+    <div class="note"><span class="m">B</span><span>No reply box. Redirecting an agent happens through the plan, not by chatting at it.</span></div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 09</span>
+    <h2>Approval gates</h2>
+    <span class="plate-file">components/Overlays.tsx · ORCHA_APPROVAL_MODE</span>
+    <span class="status none">gate UI written · enforcement never built</span>
+  </div>
+  <p class="plate-note">Two gates: promoting a variant, and granting a capability. Both follow the same shape — what is about to happen, on what evidence, and three ways out.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="grid2">
+      <div class="box">
+        <div class="lbl">Promote gate</div>
+        <div class="pad stack">
+          <div class="t"><b>Promote Variant A to production?</b></div>
+          <div class="box ghost pad"><div class="t">4.6% vs 3.8% completion · measured 3h · 99.4% healthy · $0.91/100 sessions</div></div>
+          <div class="t">Policy check required. Baseline v0.2 stays as rollback target.</div>
+          <div class="row"><span class="btn pri">Promote</span><span class="btn">Edit</span><span class="btn">Cancel</span></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="lbl">Capability gate</div>
+        <div class="pad stack">
+          <div class="t"><b>Research wants to search the web</b></div>
+          <div class="box ghost pad"><div class="t">Grants <span class="mono">external.send</span> · scope: read-only web search · this task only</div></div>
+          <div class="t">Consequential action. Ordinary internal work does not ask.</div>
+          <div class="row"><span class="btn pri">Allow once</span><span class="btn">Always</span><span class="btn">Deny</span></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Three options, never binary.</b> A yes/no gate pushes people to yes; a third path keeps refusal cheap.</span></div>
+    <div class="note"><span class="m">B</span><span><code>ORCHA_APPROVAL_MODE=consequential-only</code> is the posture these gates implement — and the most important unimplemented line in the repo.</span></div>
+    <div class="note"><span class="m">C</span><span>Consumer mode shows the same gate in plain English, with the capability name removed.</span></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 10</span>
+    <h2>Spend &amp; boundaries</h2>
+    <span class="plate-file">.env — declared, enforced by nothing</span>
+    <span class="status none">never built</span>
+  </div>
+  <p class="plate-note">Five limits, enforced before the call rather than alerted after it. The category's top fear, and currently a comment in an env file.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="box soft">
+      <div class="lbl">Boundaries panel</div>
+      <div class="pad stack">
+        <div class="row" style="justify-content:space-between;align-items:baseline">
+          <span class="t"><b>$2.18</b> spent today</span><span class="mono">ceiling $25.00</span>
+        </div>
+        <div class="box ghost" style="height:14px;padding:2px"><div style="width:9%;height:100%;background:var(--blue);border-radius:2px"></div></div>
+        <table style="margin-top:6px">
+          <thead><tr><th>Limit</th><th>Value</th><th>Enforced</th></tr></thead>
+          <tbody>
+            <tr><td>Per run</td><td class="mono">$2.00</td><td class="mono" style="color:var(--warn)">no</td></tr>
+            <tr><td>Per day</td><td class="mono">$25.00</td><td class="mono" style="color:var(--warn)">no</td></tr>
+            <tr><td>Rate</td><td class="mono">30 turns / hour</td><td class="mono" style="color:var(--warn)">no</td></tr>
+            <tr><td>Per tool</td><td class="mono">preview.deploy ×5 / day</td><td class="mono" style="color:var(--warn)">no</td></tr>
+            <tr><td>Approval threshold</td><td class="mono">&gt; $1.00 per action</td><td class="mono" style="color:var(--warn)">no</td></tr>
+          </tbody>
+        </table>
+        <div class="mono" style="color:var(--warn)">Retries caused by the model's own failures are never billed to the owner.</div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>Dollars, not credits.</b> Opaque credit consumption is one of the documented reasons people abandon products in this category.</span></div>
+    <div class="note"><span class="m">B</span><span>Pre-call enforcement stops the next call. Alerts only report the money already gone.</span></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 11</span>
+    <h2>Onboarding — two implementations</h2>
+    <span class="plate-file">views/Onboarding.tsx · views/CompanyOnboard.tsx</span>
+    <span class="status dead">both written · both unrouted · overlapping</span>
+  </div>
+  <p class="plate-note">A duplicate that needs resolving. Drawn side by side so the choice is visible rather than discovered later.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="grid2">
+      <div class="box soft">
+        <div class="lbl">A · Onboarding.tsx — 4 steps</div>
+        <div class="pad row" style="gap:6px;flex-wrap:wrap">
+          <span class="chip on">Intent</span><span class="chip">Goal</span><span class="chip">Constraints</span><span class="chip">Plan</span>
+        </div>
+        <div class="pad"><div class="box ghost pad"><div class="t">Intent cards → goal textarea → 4 constraint fields → plan with team, assumptions, permissions</div></div></div>
+      </div>
+      <div class="box soft">
+        <div class="lbl">B · CompanyOnboard.tsx — 5 steps</div>
+        <div class="pad row" style="gap:6px;flex-wrap:wrap">
+          <span class="chip on">Intent</span><span class="chip">Type</span><span class="chip">Goal</span><span class="chip">Bounds</span><span class="chip">Plan</span>
+        </div>
+        <div class="pad"><div class="box ghost pad"><div class="t">Adds company <b>kind</b> (software / content / commerce / growth / support / research) with per-kind team presets, and derives a company name from the goal</div></div></div>
+      </div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>They pull in opposite directions.</b> B adds a step (more friction) but also drafts the company name from the goal (less friction, and the pattern research favours).</span></div>
+    <div class="note"><span class="m">B</span><span>Whoever takes onboarding picks one and records it in <code>ORCHA-CHANGES.md</code>. Two live onboardings is the duplicate case <code>AGENTS.md</code> warns about.</span></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="plate">
+  <div class="plate-head">
+    <span class="plate-no">PLATE 12</span>
+    <h2>The altitude toggle</h2>
+    <span class="plate-file">views/Teams.tsx — pattern already shipped</span>
+    <span class="status">exists in one view</span>
+  </div>
+  <p class="plate-note">The same record at two resolutions. This is the whole relationship between the modes, drawn once.</p>
+  <div class="wf"><div class="wf-inner">
+    <div class="grid2">
+      <div class="box soft">
+        <div class="lbl">Consumer — what happened</div>
+        <div class="pad stack">
+          <div class="box ghost pad"><div class="t"><b>Growth</b> — Testing two ad headlines</div></div>
+          <div class="box ghost pad"><div class="t"><b>Engineering</b> — Building the upload flow</div></div>
+          <div class="box ghost pad"><div class="t"><b>Business</b> — Not hired yet</div></div>
+          <div class="box ghost pad"><div class="t">Fixed a problem with the build</div></div>
+          <div class="box ghost pad"><div class="t">$2.18 of $25 today</div></div>
+        </div>
+      </div>
+      <div class="box soft">
+        <div class="lbl">Dev — how, why, on whose authority</div>
+        <div class="pad stack">
+          <div class="box ghost pad"><div class="t">variant tree · 4.6% vs 3.8% · 3h window · $0.91/100</div></div>
+          <div class="box ghost pad"><div class="t">task_44e4c8 · role engineering · repo.write, shell.test · 2 files · evt-018</div></div>
+          <div class="box ghost pad"><div class="t">department empty · 0 of 4 hired · no tasks dispatched</div></div>
+          <div class="box ghost pad"><div class="t">evt-12 failure → diagnosis → repair → retry · rollback target v0.2</div></div>
+          <div class="box ghost pad"><div class="t">per-run $0.31 · per-tool breakdown · 2 retries unbilled</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="box ghost pad ctr" style="margin-top:10px">
+      <div class="mono">SAME EVENTS · ONE SOURCE · TWO RESOLUTIONS</div>
+    </div>
+  </div></div>
+  <div class="notes">
+    <div class="note"><span class="m">A</span><span><b>If a fact cannot be shown in both, it belongs in neither.</b> That rule keeps consumer mode from becoming marketing copy and dev mode from becoming a log dump.</span></div>
+    <div class="note"><span class="m">B</span><span>Consumer mode is the default. Nothing in dev mode is required to operate the product.</span></div>
+  </div>
+</section>
+
+<footer>
+  Plates drawn 22 Aug 2026 against <code>orcha-v1-starter-kit</code>, from the surfaces specified in
+  <code>DEV-MODE.md</code>. Structure only — not a visual design, and not a work order.
+  Status labels reflect the repo at time of drawing; trust the files over this page.
+</footer>
+
+</div>
