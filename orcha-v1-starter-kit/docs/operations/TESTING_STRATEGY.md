@@ -13,6 +13,7 @@
 
 1. “Build a study summarizer” creates a minimal five-role plan.
 2. Engineering test fails, repair succeeds, and activity feed explains both.
-3. Local Only file access is denied and logged.
+3. Local Only registration accepts metadata only, rejects content, never calls
+   the worker, and emits a concise classification event.
 4. Variant beats baseline on conversion but fails reliability gate; baseline remains promoted.
 5. Worker heartbeat disappears; task is recovered or escalated with no false completion.

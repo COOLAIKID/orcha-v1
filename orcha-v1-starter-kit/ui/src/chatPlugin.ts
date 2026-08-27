@@ -1,8 +1,9 @@
 import { Buffer } from 'node:buffer'
 import { loadEnv, type Plugin } from 'vite'
-import { offlineReply } from './chatReply'
-import { routeChat, seedMockUsers, type ChatTurn } from './smartAiRouter'
+import { offlineReply } from './chatReply.ts'
+import { routeChat, seedMockUsers, type ChatTurn } from './smartAiRouter.ts'
 import { catalogStatus, startCatalogRefresh } from './modelCatalog.ts'
+import { createTunnelGate, isProtectedTunnelPath, isSecureForwardedRequest, tokenFromAccessUrl, type TunnelRequest } from './tunnelGate.ts'
 
 function applyEnv() {
   const env = loadEnv('development', '.', '')
@@ -18,6 +19,7 @@ function applyEnv() {
     'TIER2_DELAY_MS',
     'SMART_ROUTER_MOCK',
     'OPENROUTER_API_KEY',
+    'ORCHA_TUNNEL_TOKEN',
   ]) {
     if (env[key] && !process.env[key]) process.env[key] = env[key]
   }
@@ -58,7 +60,52 @@ export function chatPlugin(): Plugin {
       const groq = Boolean(process.env.GROQ_API_KEY)
       const frontier = Boolean(process.env.OPENAI_API_KEY)
       const openrouter = Boolean(process.env.OPENROUTER_API_KEY)
-      console.log(`[orcha-chat] smart-router gemini ${gemini ? 'on' : 'off'} · groq ${groq ? 'on' : 'off'} · openrouter ${openrouter ? 'on' : 'off'} · frontier ${frontier ? 'on' : 'off'}`)
+      const tunnelSecret = (process.env.ORCHA_TUNNEL_TOKEN || '').trim()
+      const tunnel = tunnelSecret ? createTunnelGate(tunnelSecret) : null
+      console.log(`[orcha-chat] smart-router gemini ${gemini ? 'on' : 'off'} · groq ${groq ? 'on' : 'off'} · openrouter ${openrouter ? 'on' : 'off'} · frontier ${frontier ? 'on' : 'off'} · pilot-gate ${tunnel ? 'on' : 'off'}`)
+      if (tunnel) {
+        server.middlewares.use('/__orcha_access', (req, res, next) => {
+          const accessReq = req as unknown as TunnelRequest & { method?: string }
+          const accessRes = res as unknown as {
+            writeHead: (code: number, headers?: Record<string, string>) => void
+            end: (body?: string) => void
+          }
+          if (accessReq.method !== 'GET') {
+            next()
+            return
+          }
+          if (!tunnel.matchesToken(tokenFromAccessUrl(accessReq.url))) {
+            accessRes.writeHead(401, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' })
+            accessRes.end('Orcha pilot access was not authorized.')
+            return
+          }
+          const secure = isSecureForwardedRequest(accessReq)
+          const cookie = `${tunnel.cookieName}=${tunnel.cookieValue}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${secure ? '; Secure' : ''}`
+          accessRes.writeHead(302, {
+            'Cache-Control': 'no-store',
+            Location: '/',
+            'Set-Cookie': cookie,
+          })
+          accessRes.end()
+        })
+        server.middlewares.use((req, res, next) => {
+          const accessReq = req as unknown as TunnelRequest
+          if (!isProtectedTunnelPath(accessReq.url) || tunnel.isAuthorized(accessReq)) {
+            next()
+            return
+          }
+          const accessRes = res as unknown as {
+            writeHead: (code: number, headers?: Record<string, string>) => void
+            end: (body?: string) => void
+          }
+          accessRes.writeHead(401, {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json; charset=utf-8',
+            'WWW-Authenticate': 'Bearer realm="orcha-pilot"',
+          })
+          accessRes.end(JSON.stringify({ error: 'pilot_access_required', accessPath: '/__orcha_access' }))
+        })
+      }
       server.middlewares.use('/api/models', (req, res, next) => {
         const modelsReq = req as unknown as { method?: string }
         const modelsRes = res as unknown as { setHeader: (name: string, value: string) => void; end: (body: string) => void }
@@ -76,7 +123,7 @@ export function chatPlugin(): Plugin {
           next()
           return
         }
-        void import('./smartAiRouter').then(({ getUsage, listUsage, SMART_ROUTER }) => {
+        void import('./smartAiRouter.ts').then(({ getUsage, listUsage, SMART_ROUTER }) => {
           const url = usageReq.url || '/'
           const match = url.match(/^\/([^/?#]+)/)
           const payload = match

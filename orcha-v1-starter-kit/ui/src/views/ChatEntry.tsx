@@ -1,10 +1,11 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type Ref } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type Ref } from 'react'
 import { FIELD_H, FIELD_W, getBlueFieldHref } from '../blueField'
-import { offlineReply, replyTo } from '../chatReply'
+import { offlineReply, presentReply } from '../chatReply'
 import { blockedPrompt, blockedReply } from '../legal'
 import type { AppState } from '../types'
 import {
   addReport,
+  currentBusiness,
   currentChat,
   getPrefs,
   getWorkspace,
@@ -19,6 +20,9 @@ import {
   titleFrom,
   writeMessages,
 } from '../workspace'
+import { abortCompanyRunVisual, beginCompanyRun, companyRuntimeStatus, ensureRuntimeCompany, fetchInternalDiagnostics, hasLiveCompanyVisual, hydrateCompanyRuntime, ingestRuntimeEvents, pauseCompanyRuntime, pollRuntimeEvents, resumeCompanyRuntime, seedPlannedTasks, startCompanyRun, stopRuntime, startWorkspaceCheck, subscribeCompanyEvents, type DomainEvent } from '../runtimeClient'
+import { previewFromEvent } from '../runtimeEvents'
+import { CompanyLiveProgress } from '../activity/CompanyLiveProgress'
 import { CHAT_TOOLS, ToolGlyph } from '../chatTools'
 import { CompanyOnboard } from './CompanyOnboard'
 import { Settings } from './Settings'
@@ -38,6 +42,21 @@ type ChatMsg = {
   content: string
   tools?: DraftTool[]
   kind?: 'steer'
+  previewUrl?: string
+  liveWork?: boolean
+}
+
+function presentStoredMessage(message: ChatMsg): ChatMsg {
+  // Older local chats can contain the API's raw 404 detail from before
+  // runtime-company rehydration existed. Keep the history, but make the
+  // recovery path legible instead of presenting an implementation error.
+  if (message.role === 'orcha' && message.content.trim() === 'Company not found') {
+    return {
+      ...message,
+      content: 'This local company needs to reconnect after the workspace restarted. Run /workspace-check to reconnect it.',
+    }
+  }
+  return message
 }
 
 type QueuedTurn = { id: string; text: string; tools: DraftTool[] }
@@ -45,6 +64,11 @@ type QueuedTurn = { id: string; text: string; tools: DraftTool[] }
 function packContent(tools: DraftTool[], text: string) {
   const head = tools.map((tool) => (tool.detail ? `${tool.label}: ${tool.detail}` : tool.label)).join(', ')
   return [head, text].filter(Boolean).join('\n\n')
+}
+
+function isCompanyBuildRequest(text: string) {
+  return /\b(build|create|develop|implement|launch|make)\b/i.test(text)
+    && /\b(app|site|website|landing page|product|tool|dashboard|prototype|page)\b/i.test(text)
 }
 
 const WORDS = ['CREATE', 'BUILD', 'AUTOMATE', 'BUILD'] as const
@@ -68,36 +92,19 @@ function prefersReducedMotion() {
 function HollowGlyph({
   text,
   href,
-  patternRef,
-  sizerRef,
-  textRef,
+  fieldRef,
 }: {
   text: string
   href: string
-  patternRef: Ref<SVGPatternElement>
-  sizerRef?: Ref<HTMLSpanElement>
-  textRef?: Ref<SVGTextElement>
+  fieldRef?: Ref<HTMLSpanElement>
 }) {
-  const uid = useId().replace(/:/g, '')
   return (
-    <span className="hollow-wrap">
-      <span className="hollow-sizer" ref={sizerRef}>{text}</span>
-      <svg className="hollow-glyph" overflow="visible" aria-hidden="true">
-        <defs>
-          <pattern
-            ref={patternRef}
-            id={`field-${uid}`}
-            patternUnits="userSpaceOnUse"
-            width={FIELD_W}
-            height={FIELD_H}
-            x="0"
-            y="0"
-          >
-            <image href={href} width={FIELD_W} height={FIELD_H} />
-          </pattern>
-        </defs>
-        <text ref={textRef} x="0" y="50%" dominantBaseline="central" fill={`url(#field-${uid})`}>{text}</text>
-      </svg>
+    <span
+      className="hollow-wrap"
+      ref={fieldRef}
+      style={{ backgroundImage: `url("${href}")` }}
+    >
+      {text}
     </span>
   )
 }
@@ -112,26 +119,13 @@ function FlipWord() {
   const bottomRef = useRef<HTMLSpanElement>(null)
   const measuresRef = useRef<HTMLSpanElement>(null)
   const widthsRef = useRef([0, 0, 0, 0])
-  const shownRef = useRef({ front: 'CREATE', bottom: 'BUILD' })
   const [fieldHref, setFieldHref] = useState('')
-  const leadPatRef = useRef<SVGPatternElement>(null)
-  const frontPatRef = useRef<SVGPatternElement>(null)
-  const bottomPatRef = useRef<SVGPatternElement>(null)
-  const qPatRef = useRef<SVGPatternElement>(null)
-  const frontSizerRef = useRef<HTMLSpanElement>(null)
-  const frontTextRef = useRef<SVGTextElement>(null)
-  const bottomSizerRef = useRef<HTMLSpanElement>(null)
-  const bottomTextRef = useRef<SVGTextElement>(null)
-  const cropRef = useRef({ x: 360, y: 280 })
-
-  const writeFace = (
-    word: string,
-    sizer: HTMLSpanElement | null,
-    glyph: SVGTextElement | null,
-  ) => {
-    if (sizer && sizer.textContent !== word) sizer.textContent = word
-    if (glyph && glyph.textContent !== word) glyph.textContent = word
-  }
+  const [renderedTurn, setRenderedTurn] = useState(0)
+  const leadFieldRef = useRef<HTMLSpanElement>(null)
+  const frontFieldRef = useRef<HTMLSpanElement>(null)
+  const bottomFieldRef = useRef<HTMLSpanElement>(null)
+  const qFieldRef = useRef<HTMLSpanElement>(null)
+  const cropRef = useRef({ x: FIELD_W * 0.82, y: FIELD_H * 0.36 })
 
   const measureWords = () => {
     const line = lineRef.current
@@ -163,37 +157,28 @@ function FlipWord() {
   }, [])
 
   useEffect(() => {
-    if (!fieldHref) {
-      setFieldHref(getBlueFieldHref())
-      return
+    if (fieldHref) return
+    const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void }
+    const run = () => setFieldHref(getBlueFieldHref())
+    if (typeof win.requestIdleCallback === 'function') {
+      const id = win.requestIdleCallback(run, { timeout: 2500 })
+      return () => win.cancelIdleCallback?.(id)
     }
+    const id = window.setTimeout(run, 0)
+    return () => window.clearTimeout(id)
+  }, [fieldHref])
+
+  useEffect(() => {
+    if (!fieldHref) return
 
     let raf = 0
     let phase: 'glow' | 'flip' = 'glow'
     let mark = performance.now()
     let turn = 0
-    let last = performance.now()
     let spotX = cropRef.current.x
     let spotY = cropRef.current.y
-    let destX = spotX
-    let destY = spotY
-    let targetX = spotX
-    let targetY = spotY
-    let nextTarget = 0
     let lastPaint = 0
-
-    const pickTarget = (fromCurX: number, fromCurY: number) => {
-      let nextX = fromCurX
-      let nextY = fromCurY
-      for (let i = 0; i < 8; i += 1) {
-        nextX = 40 + Math.random() * (FIELD_W * 0.68)
-        nextY = 40 + Math.random() * (FIELD_H * 0.68)
-        if ((nextX - fromCurX) ** 2 + (nextY - fromCurY) ** 2 > 160000) break
-      }
-      targetX = nextX
-      targetY = nextY
-    }
-    pickTarget(spotX, spotY)
+    let layout: { lead: number; stage: number; bottom: number; q: number } | null = null
     measureWords()
 
     const paint = (spin: number, slide: number, flipping: boolean, now: number) => {
@@ -210,48 +195,59 @@ function FlipWord() {
       if (widthsRef.current.some((value) => value < 8)) measureWords()
       const fromW = widthsRef.current[from]
       const toW = widthsRef.current[to]
-      shownRef.current.front = WORDS[from]
-      shownRef.current.bottom = WORDS[to]
-      writeFace(WORDS[from], frontSizerRef.current, frontTextRef.current)
-      writeFace(WORDS[to], bottomSizerRef.current, bottomTextRef.current)
       const maxW = Math.max(0, ...widthsRef.current)
       if (maxW > 8) {
         stage.style.width = `${maxW}px`
         stage.style.flexBasis = `${maxW}px`
       }
       const verbW = (fromW > 8 && toW > 8) ? fromW + (toW - fromW) * slide : fromW
+      const lineShift = maxW > 8 && verbW > 8 ? (maxW - verbW) / 2 : 0
+      const qShift = maxW > 8 && verbW > 8 ? verbW - maxW : 0
       if (maxW > 8 && verbW > 8) {
-        const shift = (maxW - verbW) / 2
-        line.style.transform = `translate3d(${shift}px, 0, 0)`
-        q.style.transform = `translate3d(${verbW - maxW}px, 0, 0)`
+        line.style.transform = `translate3d(${lineShift}px, 0, 0)`
+        q.style.transform = `translate3d(${qShift}px, 0, 0)`
+      } else {
+        line.style.transform = 'none'
+        q.style.transform = 'none'
       }
       cube.style.transform = `rotateX(${spin * 90}deg)`
       stage.classList.toggle('is-flipping', flipping)
+      // Keep one face authoritative at a time. Perspective rendering can put
+      // both faces inside the clipped viewport around the handoff, which reads
+      // as a duplicated headline on slower mobile GPUs.
+      front.style.opacity = !flipping || spin < 0.5 ? '1' : '0'
+      bottom.style.opacity = flipping && spin >= 0.5 ? '1' : '0'
 
-      const dt = Math.min(0.05, Math.max(0.008, (now - last) / 1000))
-      last = now
-      if (now >= nextTarget) {
-        pickTarget(targetX, targetY)
-        nextTarget = now + 5200 + Math.random() * 2800
-      }
-      const toward = 1 - Math.exp(-dt / 1.6)
-      const follow = 1 - Math.exp(-dt / 0.7)
-      destX += (targetX - destX) * toward
-      destY += (targetY - destY) * toward
-      spotX += (destX - spotX) * follow
-      spotY += (destY - spotY) * follow
+      // A single predictable sweep is easier to follow and avoids the
+      // start-stop feeling of the old random 2D target chase. The image moves
+      // right-to-left so the bright lane itself travels left-to-right.
+      const glowProgress = phase === 'glow' ? Math.min(1, Math.max(0, (now - mark) / GLOW_MS)) : 1
+      const scanStart = FIELD_W * 0.82
+      const scanEnd = -FIELD_W * 0.12
+      spotX = scanStart + (scanEnd - scanStart) * glowProgress
+      spotY = FIELD_H * 0.36
       cropRef.current = { x: spotX, y: spotY }
 
-      const box = line.getBoundingClientRect()
-      const place = (pat: SVGPatternElement | null, host: HTMLElement) => {
-        if (!pat) return
-        const el = host.getBoundingClientRect()
-        pat.setAttribute('patternTransform', `translate(${-(spotX + el.left - box.left)} ${-spotY})`)
+      // Text background coordinates only need to resync as the layout changes.
+      // Reading four client rects on every animation frame caused avoidable
+      // mobile reflow while the headline was flipping.
+      if (!layout) {
+        const box = line.getBoundingClientRect()
+        layout = {
+          lead: lead.getBoundingClientRect().left - box.left,
+          stage: stage.getBoundingClientRect().left - box.left,
+          bottom: stage.getBoundingClientRect().left - box.left,
+          q: q.getBoundingClientRect().left - box.left - qShift,
+        }
       }
-      place(leadPatRef.current, lead)
-      place(frontPatRef.current, stage)
-      place(bottomPatRef.current, stage)
-      place(qPatRef.current, q)
+      const place = (field: HTMLSpanElement | null, offset: number, extra = 0) => {
+        if (!field) return
+        field.style.backgroundPosition = `${-(spotX + offset + lineShift + extra)}px ${-spotY}px`
+      }
+      place(leadFieldRef.current, layout.lead)
+      place(frontFieldRef.current, layout.stage)
+      place(bottomFieldRef.current, layout.bottom)
+      place(qFieldRef.current, layout.q, qShift)
     }
 
     paint(0, 0, false, performance.now())
@@ -276,6 +272,7 @@ function FlipWord() {
         paint(easeFlip(t), easeSlide(t), true, now)
         if (t >= 1) {
           turn += 1
+          setRenderedTurn(turn)
           phase = 'glow'
           mark = now
           paint(0, 0, false, now)
@@ -285,7 +282,27 @@ function FlipWord() {
     }
 
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    const onResize = () => {
+      layout = null
+      measureWords()
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        if (raf) cancelAnimationFrame(raf)
+        raf = 0
+        return
+      }
+      lastPaint = 0
+      mark = performance.now()
+      raf = requestAnimationFrame(tick)
+    }
+    window.addEventListener('resize', onResize)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', onResize)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [fieldHref])
 
   return (
@@ -298,38 +315,36 @@ function FlipWord() {
       <span className="flip-line" ref={lineRef}>
         <span className="chat-title-lead" ref={leadHostRef}>
           {fieldHref ? (
-            <HollowGlyph text="WHAT COULD WE" href={fieldHref} patternRef={leadPatRef} />
+            <HollowGlyph text="WHAT COULD WE" href={fieldHref} fieldRef={leadFieldRef} />
           ) : 'WHAT COULD WE'}
         </span>
         <span className="flip-stage" ref={stageRef}>
-          <span className="flip-cube" ref={cubeRef}>
-            <span className="flip-verb flip-front" ref={frontHostRef}>
-              {fieldHref ? (
-                <HollowGlyph
-                  text="CREATE"
-                  href={fieldHref}
-                  patternRef={frontPatRef}
-                  sizerRef={frontSizerRef}
-                  textRef={frontTextRef}
-                />
-              ) : 'CREATE'}
-            </span>
-            <span className="flip-bottom" ref={bottomRef} aria-hidden="true">
-              {fieldHref ? (
-                <HollowGlyph
-                  text="BUILD"
-                  href={fieldHref}
-                  patternRef={bottomPatRef}
-                  sizerRef={bottomSizerRef}
-                  textRef={bottomTextRef}
-                />
-              ) : 'BUILD'}
+          <span className="flip-viewport">
+            <span className="flip-cube" ref={cubeRef}>
+              <span className="flip-verb flip-front" ref={frontHostRef}>
+                {fieldHref ? (
+                  <HollowGlyph
+                    text={WORDS[renderedTurn % WORDS.length]}
+                    href={fieldHref}
+                    fieldRef={frontFieldRef}
+                  />
+                ) : 'CREATE'}
+              </span>
+              <span className="flip-bottom" ref={bottomRef} aria-hidden="true">
+                {fieldHref ? (
+                  <HollowGlyph
+                    text={WORDS[(renderedTurn + 1) % WORDS.length]}
+                    href={fieldHref}
+                    fieldRef={bottomFieldRef}
+                  />
+                ) : 'BUILD'}
+              </span>
             </span>
           </span>
         </span>
         <span className="flip-q" ref={qHostRef}>
           {fieldHref ? (
-            <HollowGlyph text="?" href={fieldHref} patternRef={qPatRef} />
+            <HollowGlyph text="?" href={fieldHref} fieldRef={qFieldRef} />
           ) : '?'}
         </span>
       </span>
@@ -338,7 +353,12 @@ function FlipWord() {
 }
 
 const SLASH_CMDS = [
+  { id: 'workspace-check', name: '/workspace-check', hint: 'Create a real workspace test file', arg: false },
+  { id: 'runtime-status', name: '/runtime-status', hint: 'Show verified company runtime state', arg: false },
+  { id: 'pause-company', name: '/pause-company', hint: 'Pause new company work', arg: false },
+  { id: 'resume-company', name: '/resume-company', hint: 'Resume paused company work', arg: false },
   { id: 'stop', name: '/stop', hint: 'Stop this generation', arg: false },
+  { id: 'diagnostics', name: '/diagnostics', hint: 'Show operator runtime status', arg: false },
   { id: 'steer', name: '/steer', hint: 'Steer the current reply', arg: true },
   { id: 'queue', name: '/queue', hint: 'Send after this reply', arg: true },
   { id: 'new', name: '/new', hint: 'Start a new chat', arg: false },
@@ -427,6 +447,11 @@ export function ChatEntry({ state }: { state: AppState }) {
   const threadRef = useRef<HTMLDivElement>(null)
   const stickRef = useRef(true)
   const abortRef = useRef<AbortController | null>(null)
+  const runtimeAbortRef = useRef<AbortController | null>(null)
+  const runtimeCheckServerRef = useRef(false)
+  const runtimeCheckMessageRef = useRef<string | null>(null)
+  const runtimeUnsubRef = useRef<(() => void) | null>(null)
+  const runtimeHydrationRef = useRef(0)
   const queueRef = useRef<QueuedTurn[]>([])
   const steerRef = useRef<QueuedTurn | null>(null)
   const messagesRef = useRef<ChatMsg[]>([])
@@ -441,6 +466,7 @@ export function ChatEntry({ state }: { state: AppState }) {
   const [queue, setQueue] = useState<QueuedTurn[]>([])
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [busy, setBusy] = useState(false)
+  const [runtimeRunning, setRuntimeRunning] = useState(false)
   messagesRef.current = messages
   busyRef.current = busy
   const [slashOn, setSlashOn] = useState(true)
@@ -475,9 +501,13 @@ export function ChatEntry({ state }: { state: AppState }) {
     pinThread()
   }, [messages, busy, chars, queue])
 
-  const openBoard = () => {
+  const openBoard = (initialGoal = '') => {
     setIntent('')
     setStep('intent')
+    // Keep a goal that was held for sign-in attached to the plan review. The
+    // chat still owns the eventual send; onboarding should not make the owner
+    // retype the idea just to get an honest company preview.
+    setGoal(initialGoal)
     setConstraint('audience', '')
     setConstraint('deadline', '')
     setConstraint('budget', '')
@@ -504,6 +534,13 @@ export function ChatEntry({ state }: { state: AppState }) {
   const resetThread = () => {
     abortRef.current?.abort()
     abortRef.current = null
+    runtimeAbortRef.current?.abort()
+    runtimeAbortRef.current = null
+    runtimeCheckServerRef.current = false
+    runtimeCheckMessageRef.current = null
+    runtimeHydrationRef.current += 1
+    runtimeUnsubRef.current?.()
+    runtimeUnsubRef.current = null
     skipSave.current = true
     setMessages([])
     setGoal('')
@@ -514,16 +551,24 @@ export function ChatEntry({ state }: { state: AppState }) {
     setSlashOn(true)
     busyRef.current = false
     setBusy(false)
+    setRuntimeRunning(false)
     setPlusOpen(false)
     setAsking(false)
   }
 
   const loadCurrent = () => {
     const chat = currentChat()
+    runtimeHydrationRef.current += 1
+    runtimeUnsubRef.current?.()
+    runtimeUnsubRef.current = null
     skipSave.current = true
     abortRef.current?.abort()
     abortRef.current = null
-    setMessages((chat?.messages ?? []) as ChatMsg[])
+    runtimeAbortRef.current?.abort()
+    runtimeAbortRef.current = null
+    runtimeCheckServerRef.current = false
+    runtimeCheckMessageRef.current = null
+    setMessages(((chat?.messages ?? []) as ChatMsg[]).map(presentStoredMessage))
     setChars([])
     setQueue([])
     queueRef.current = []
@@ -531,6 +576,7 @@ export function ChatEntry({ state }: { state: AppState }) {
     setSlashOn(true)
     busyRef.current = false
     setBusy(false)
+    setRuntimeRunning(false)
     setPlusOpen(false)
     setAsking(Boolean(chat?.messages.length))
     setBoardLeave(false)
@@ -538,6 +584,91 @@ export function ChatEntry({ state }: { state: AppState }) {
     setSignup(false)
     setSignin(false)
     setSettings(false)
+  }
+
+  const hydrateCurrentRuntime = () => {
+    const token = ++runtimeHydrationRef.current
+    runtimeUnsubRef.current?.()
+    runtimeUnsubRef.current = null
+    const business = currentBusiness()
+    const chat = currentChat()
+    const liveMessage = chat?.messages.find((message) => (message as ChatMsg).liveWork)
+    if (!business?.runtimeCompanyId || !liveMessage) {
+      setRuntimeRunning(false)
+      return
+    }
+
+    void hydrateCompanyRuntime(business).then((hydrated) => {
+      if (!hydrated || token !== runtimeHydrationRef.current) return
+      const replace = (content: string, previewUrl?: string) => {
+        setMessages((current) => current.map((message) => message.id === liveMessage.id
+          ? { ...message, content, previewUrl: previewUrl ?? message.previewUrl, liveWork: true }
+          : message))
+      }
+      const preview = [...hydrated.events]
+        .reverse()
+        .map((event) => previewFromEvent(event, hydrated.companyId))
+        .find((value): value is string => Boolean(value))
+      if (preview) replace("I'll keep this company running on this PC until you Stop All.", preview)
+
+      const latestCycle = [...hydrated.events].reverse().find((event) => (
+        event.event_type === 'company.started' || event.event_type === 'company.cycle_started'
+      ))
+      const terminal = [...hydrated.events].reverse().find((event) => (
+        event.event_type === 'company.run_completed' || event.event_type === 'company.run_blocked'
+      ))
+      if (terminal && (!latestCycle || terminal.sequence > latestCycle.sequence)) {
+        if (terminal.event_type === 'company.run_blocked') {
+          replace(typeof terminal.data.summary === 'string'
+            ? terminal.data.summary
+            : 'The company run is blocked until its server-side AI provider is configured.')
+        } else {
+          const status = typeof terminal.data.status === 'string' ? terminal.data.status : 'completed'
+          const summary = typeof terminal.data.summary === 'string' ? terminal.data.summary : 'The company run reached a terminal state.'
+          const continuing = terminal.data.alwaysOn === true && status !== 'stopped'
+          if (!continuing) replace(status === 'completed' ? `${summary}\n\nOpen Agent Grid to inspect verified specialist work.` : summary, preview || undefined)
+        }
+      }
+
+      if (!hydrated.active) {
+        setRuntimeRunning(false)
+        return
+      }
+
+      setRuntimeRunning(true)
+      let unsubscribe: (() => void) | null = null
+      unsubscribe = subscribeCompanyEvents(hydrated.companyId, hydrated.objective, hydrated.cursor, (event: DomainEvent) => {
+        if (token !== runtimeHydrationRef.current) {
+          unsubscribe?.()
+          return
+        }
+        const nextPreview = previewFromEvent(event, hydrated.companyId)
+        if (nextPreview) replace("I'll keep this company running on this PC until you Stop All.", nextPreview)
+        if (event.event_type === 'company.run_blocked') {
+          replace(typeof event.data.summary === 'string'
+            ? event.data.summary
+            : 'The company run is blocked until its server-side AI provider is configured.')
+        }
+        if (event.event_type === 'company.run_completed') {
+          const status = typeof event.data.status === 'string' ? event.data.status : 'completed'
+          const summary = typeof event.data.summary === 'string' ? event.data.summary : 'The company run reached a terminal state.'
+          const continuing = event.data.alwaysOn === true && status !== 'stopped'
+          if (!continuing) {
+            replace(status === 'completed' ? `${summary}\n\nOpen Agent Grid to inspect verified specialist work.` : summary, nextPreview || undefined)
+            unsubscribe?.()
+            if (runtimeUnsubRef.current === unsubscribe) runtimeUnsubRef.current = null
+            setRuntimeRunning(false)
+          }
+        }
+      })
+      runtimeUnsubRef.current = unsubscribe
+    }).catch(() => {
+      if (token !== runtimeHydrationRef.current) return
+      setRuntimeRunning(false)
+      setMessages((current) => current.map((message) => message.id === liveMessage.id
+        ? { ...message, content: 'Saved company activity is available, but the live connection could not be restored yet.', liveWork: true }
+        : message))
+    })
   }
 
   useEffect(() => {
@@ -579,7 +710,11 @@ export function ChatEntry({ state }: { state: AppState }) {
 
   useEffect(() => {
     loadCurrent()
-    const onOpen = () => loadCurrent()
+    hydrateCurrentRuntime()
+    const onOpen = () => {
+      loadCurrent()
+      hydrateCurrentRuntime()
+    }
     const onOut = () => {
       resetThread()
       setBoardLeave(false)
@@ -594,6 +729,13 @@ export function ChatEntry({ state }: { state: AppState }) {
       window.removeEventListener('orcha:open-thread', onOpen)
       window.removeEventListener('orcha:signed-out', onOut)
       stop()
+      runtimeAbortRef.current?.abort()
+      runtimeAbortRef.current = null
+      runtimeCheckServerRef.current = false
+      runtimeCheckMessageRef.current = null
+      runtimeHydrationRef.current += 1
+      runtimeUnsubRef.current?.()
+      runtimeUnsubRef.current = null
     }
   }, [])
 
@@ -776,7 +918,7 @@ export function ChatEntry({ state }: { state: AppState }) {
     if (!preset?.kind) {
       if (!room.currentBusinessId) {
         pendingRef.current = { text, tools: attached }
-        openBoard()
+        openBoard(text)
         return
       }
       if (!room.currentChatId) newChat(false)
@@ -796,6 +938,73 @@ export function ChatEntry({ state }: { state: AppState }) {
       }
       setAsking(true)
       setMessages(next)
+      return
+    }
+    if (!preset?.kind && isCompanyBuildRequest(text)) {
+      const orchaId = `o-${Date.now()}`
+      const next = [
+        ...messagesRef.current,
+        { id: `u-${Date.now()}`, role: 'user' as const, content: text, tools: attached },
+        { id: orchaId, role: 'orcha' as const, content: "I'll keep this company running on this PC until you Stop All.", liveWork: true },
+      ]
+      messagesRef.current = next
+      setGoal('')
+      setChars([])
+      setPlusOpen(false)
+      setSlashOn(false)
+      setAsking(true)
+      stickRef.current = true
+      setMessages(next)
+      busyRef.current = true
+      setBusy(true)
+      setRuntimeRunning(true)
+      runtimeHydrationRef.current += 1
+      runtimeUnsubRef.current?.()
+      runtimeUnsubRef.current = null
+      beginCompanyRun(text)
+      const replace = (content: string, previewUrl?: string, liveWork = true) => setMessages((current) => current.map((message) => message.id === orchaId ? { ...message, content, previewUrl: previewUrl ?? message.previewUrl, liveWork } : message))
+      let unsubscribe: (() => void) | null = null
+      try {
+        const companyId = await ensureRuntimeCompany()
+        unsubscribe = subscribeCompanyEvents(companyId, text, 0, (event) => {
+          const preview = previewFromEvent(event, companyId)
+          if (preview) replace("I'll keep this company running on this PC until you Stop All.", preview)
+          if (event.event_type === 'company.run_blocked') {
+            replace(typeof event.data.summary === 'string' ? event.data.summary : 'The company run is blocked until its server-side AI provider is configured.')
+          }
+          if (event.event_type === 'company.run_completed') {
+            const status = typeof event.data.status === 'string' ? event.data.status : 'completed'
+            const summary = typeof event.data.summary === 'string' ? event.data.summary : 'The company run reached a terminal state.'
+            const continuing = event.data.alwaysOn === true && status !== 'stopped'
+            if (continuing) {
+              if (preview) replace("I'll keep this company running on this PC until you Stop All.", preview)
+              return
+            }
+            replace(status === 'completed' ? `${summary}\n\nOpen Agent Grid to inspect verified specialist work.` : summary, preview || undefined)
+            unsubscribe?.()
+            runtimeUnsubRef.current = null
+            busyRef.current = false
+            setBusy(false)
+            setRuntimeRunning(false)
+          }
+        })
+        runtimeUnsubRef.current = unsubscribe
+        const started = await startCompanyRun(text)
+        seedPlannedTasks(text, started.tasks)
+        replace("I'll keep this company running on this PC until you Stop All.")
+      } catch (error) {
+        if (hasLiveCompanyVisual()) {
+          replace(error instanceof Error ? error.message : 'The company run is still connecting. Live work stays on this PC.')
+          return
+        }
+        unsubscribe?.()
+        runtimeUnsubRef.current = null
+        abortCompanyRunVisual()
+        replace(error instanceof Error ? error.message : 'The company run could not start.', undefined, false)
+        busyRef.current = false
+        setBusy(false)
+        setRuntimeRunning(false)
+      }
       return
     }
     if (!prefs.cloudAi) {
@@ -882,10 +1091,10 @@ export function ChatEntry({ state }: { state: AppState }) {
           }
         }
       }
-      if (!got) append(offlineReply(replyTo(content)))
+      if (!got) append(offlineReply())
     } catch (err) {
       if (!(err instanceof DOMException && err.name === 'AbortError')) {
-        append(offlineReply(replyTo(content)))
+        append(offlineReply())
       } else {
         setMessages((current) => {
           const last = current[current.length - 1]
@@ -918,8 +1127,33 @@ export function ChatEntry({ state }: { state: AppState }) {
   }
 
   const stopGen = () => {
+    const stoppingRuntime = runtimeRunning
+    const stoppingWorkspaceCheck = runtimeAbortRef.current !== null
+    const shouldStopServerRuntime = !stoppingWorkspaceCheck || runtimeCheckServerRef.current
+    const workspaceCheckMessageId = runtimeCheckMessageRef.current
     steerRef.current = null
     abortRef.current?.abort()
+    runtimeAbortRef.current?.abort()
+    runtimeAbortRef.current = null
+    runtimeCheckServerRef.current = false
+    runtimeCheckMessageRef.current = null
+    runtimeHydrationRef.current += 1
+    runtimeUnsubRef.current?.()
+    runtimeUnsubRef.current = null
+    if (stoppingRuntime) {
+      if (shouldStopServerRuntime) void stopRuntime().catch(() => undefined)
+      busyRef.current = false
+      setBusy(false)
+      setRuntimeRunning(false)
+      setMessages((current) => {
+        const live = [...current].reverse().find((message) => message.liveWork)
+        const targetId = workspaceCheckMessageId || live?.id
+        if (!targetId) return current
+        return current.map((message) => message.id === targetId
+          ? { ...message, content: workspaceCheckMessageId ? 'Local Workspace check stopped by the owner.' : 'Company run stopped by the owner.', ...(workspaceCheckMessageId ? {} : { liveWork: true }) }
+          : message)
+      })
+    }
   }
 
   const enqueue = (text: string, tools: DraftTool[]) => {
@@ -932,10 +1166,149 @@ export function ChatEntry({ state }: { state: AppState }) {
     setSlashOn(false)
   }
 
+  const runWorkspaceCheck = async () => {
+    if (!isSignedIn()) {
+      askAuth()
+      return
+    }
+    if (!currentBusiness()) {
+      openBoard()
+      return
+    }
+    if (runtimeRunning) return
+    const runId = `runtime-${Date.now()}`
+    const next: ChatMsg[] = [
+      ...messagesRef.current,
+      { id: `u-${Date.now()}`, role: 'user', content: '/workspace-check' },
+      { id: runId, role: 'orcha', content: 'Checking the Local Workspace…' },
+    ]
+    messagesRef.current = next
+    setMessages(next)
+    setGoal('')
+    setChars([])
+    setSlashOn(false)
+    setRuntimeRunning(true)
+    busyRef.current = true
+    setBusy(true)
+    const controller = new AbortController()
+    runtimeAbortRef.current = controller
+    runtimeCheckServerRef.current = false
+    runtimeCheckMessageRef.current = runId
+    const replace = (content: string) => {
+      setMessages((current) => current.map((message) => message.id === runId ? { ...message, content } : message))
+    }
+    try {
+      const job = await startWorkspaceCheck(controller.signal)
+      if (controller.signal.aborted) {
+        await stopRuntime().catch(() => undefined)
+        replace('Local Workspace check stopped by the owner.')
+        return
+      }
+      runtimeCheckServerRef.current = true
+      let since = 0
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 350))
+        if (controller.signal.aborted) {
+          replace('Local Workspace check stopped by the owner.')
+          return
+        }
+        const events = await pollRuntimeEvents(job.companyId, since, controller.signal)
+        if (!events.length) continue
+        since = events[events.length - 1].sequence
+        ingestRuntimeEvents(events, currentBusiness()?.brief || 'Verify the Local Workspace')
+        const completed = events.find((event) => event.event_type === 'task.completed' && event.data.taskId === job.taskId)
+        const failed = events.find((event) => event.event_type === 'task.failed' && event.data.taskId === job.taskId)
+        const cancelled = events.find((event) => event.event_type === 'task.cancelled' && event.data.taskId === job.taskId)
+        if (completed) {
+          replace('Local Workspace created `test.txt` containing `hello from orcha`. Open Agent Grid to inspect the verified event.')
+          return
+        }
+        if (failed) {
+          replace(typeof failed.data.summary === 'string' ? failed.data.summary : 'The Local Workspace could not finish this check.')
+          return
+        }
+        if (cancelled) {
+          replace(typeof cancelled.data.summary === 'string' ? cancelled.data.summary : 'Local Workspace check stopped by the owner.')
+          return
+        }
+      }
+      replace('The Local Workspace is still working. Open Agent Grid for the recorded activity.')
+    } catch (error) {
+      replace(controller.signal.aborted
+        ? 'Local Workspace check stopped by the owner.'
+        : error instanceof Error ? error.message : 'Local Workspace is offline. Start orcha-worker and try again.')
+    } finally {
+      if (runtimeAbortRef.current === controller) runtimeAbortRef.current = null
+      runtimeCheckServerRef.current = false
+      if (runtimeCheckMessageRef.current === runId) runtimeCheckMessageRef.current = null
+      // Workspace checks use the same composer Stop affordance as chat
+      // generation; always return it to an idle, sendable state.
+      busyRef.current = false
+      setBusy(false)
+      setRuntimeRunning(false)
+    }
+  }
+
   const runSlash = (id: string, arg = '') => {
     if (id === 'stop') {
       stopGen()
+      if (runtimeRunning) setRuntimeRunning(false)
       setGoal('')
+      return
+    }
+    if (id === 'diagnostics') {
+      const replyId = `runtime-diag-${Date.now()}`
+      const next: ChatMsg[] = [
+        ...messagesRef.current,
+        { id: `u-${Date.now()}`, role: 'user', content: '/diagnostics' },
+        { id: replyId, role: 'orcha', content: 'Reading operator diagnostics…' },
+      ]
+      messagesRef.current = next
+      setMessages(next)
+      setGoal('')
+      setSlashOn(false)
+      const replace = (content: string) => setMessages((current) => current.map((message) => message.id === replyId ? { ...message, content } : message))
+      void fetchInternalDiagnostics()
+        .then((body) => {
+          const providers = (body.providers || []).map((item) => {
+            const status = item.status === 'configured' ? 'Ready' : item.status === 'rate_limited' ? 'Rate limited' : item.status === 'failed' ? 'Failed' : 'Unconfigured'
+            return `${item.provider}: ${status}`
+          }).join('\n')
+          const worker = body.worker?.status === 'ready' ? 'Ready' : body.worker?.status === 'offline' ? 'Offline' : body.worker?.status || 'Unknown'
+          const scheduler = body.scheduler
+            ? `Scheduler: ${body.scheduler.status || 'Unknown'} · ${body.scheduler.activeTasks ?? 0} active task${body.scheduler.activeTasks === 1 ? '' : 's'} · ${body.scheduler.activeCompanies ?? 0} always-on compan${body.scheduler.activeCompanies === 1 ? 'y' : 'ies'}`
+            : 'Scheduler: unavailable on this host'
+          replace(`Local Workspace: ${worker}${body.worker?.detail ? ` · ${body.worker.detail}` : ''}\n${scheduler}\n${providers || 'No providers reported'}\nEvents: ${body.eventStream || 'sse'} · ${body.eventStore || 'sqlite'}`)
+        })
+        .catch((error: unknown) => replace(error instanceof Error ? error.message : 'Diagnostics are unavailable.'))
+      return
+    }
+    if (id === 'workspace-check') {
+      void runWorkspaceCheck()
+      return
+    }
+    if (id === 'runtime-status' || id === 'pause-company' || id === 'resume-company') {
+      const label = `/${id}`
+      const replyId = `runtime-control-${Date.now()}`
+      const next: ChatMsg[] = [
+        ...messagesRef.current,
+        { id: `u-${Date.now()}`, role: 'user', content: label },
+        { id: replyId, role: 'orcha', content: 'Checking the company runtime…' },
+      ]
+      messagesRef.current = next
+      setMessages(next)
+      setGoal('')
+      setSlashOn(false)
+      const replace = (content: string) => setMessages((current) => current.map((message) => message.id === replyId ? { ...message, content } : message))
+      const action = id === 'pause-company'
+        ? pauseCompanyRuntime().then(() => 'Company work is paused. Nothing new will be dispatched until you resume it.')
+        : id === 'resume-company'
+          ? resumeCompanyRuntime().then(({ resumed }) => `Company work resumed. ${resumed} blocked task${resumed === 1 ? '' : 's'} requeued.`)
+          : companyRuntimeStatus().then(({ status, counts }) => {
+              const details = Object.entries(counts).map(([state, count]) => `${count} ${state}`).join(', ') || 'no recorded tasks'
+              return `Company runtime is ${status}. Current tasks: ${details}.`
+            })
+      void action.then(replace).catch((error: unknown) => replace(error instanceof Error ? error.message : 'Could not read the company runtime.'))
       return
     }
     if (id === 'new') {
@@ -1053,7 +1426,7 @@ export function ChatEntry({ state }: { state: AppState }) {
     if (!pending) return
     pendingRef.current = null
     if (!getWorkspace().currentBusinessId) {
-      openBoard()
+      openBoard(pending.text)
       return
     }
     setGoal('')
@@ -1067,7 +1440,7 @@ export function ChatEntry({ state }: { state: AppState }) {
     if (!pending) return true
     pendingRef.current = null
     if (!getWorkspace().currentBusinessId) {
-      openBoard()
+      openBoard(pending.text)
       return true
     }
     setGoal('')
@@ -1092,9 +1465,9 @@ export function ChatEntry({ state }: { state: AppState }) {
         aria-hidden={board || undefined}
       >
       {!live && (
-        <h1 className="chat-title">
+        <h1 className="chat-title" aria-label="What could we create, build, or automate?">
           <span className="visually-hidden">WHAT COULD WE CREATE, BUILD, OR AUTOMATE?</span>
-          <FlipWord />
+          <span aria-hidden="true"><FlipWord /></span>
         </h1>
       )}
       {live && (
@@ -1109,10 +1482,13 @@ export function ChatEntry({ state }: { state: AppState }) {
           }}
         >
           {messages.map((msg, index) => (
-            <article key={msg.id} className={`chat-msg is-${msg.role}${prefs.showTools && msg.tools?.length ? ' is-tool' : ''}`}>
+            (() => {
+              const renderedContent = msg.role === 'orcha' ? presentReply(msg.content) : msg.content
+              const isOperationalState = renderedContent !== msg.content
+              return <article key={msg.id} className={`chat-msg is-${msg.role}${prefs.showTools && msg.tools?.length ? ' is-tool' : ''}`}>
               <span className="chat-msg-who">
                 {msg.role === 'orcha' ? 'Orcha · AI' : msg.kind === 'steer' ? 'You · steer' : 'You'}
-                {msg.role === 'orcha' && msg.content && (
+                {msg.role === 'orcha' && msg.content && !isOperationalState && (
                   <button
                     type="button"
                     className="chat-flag"
@@ -1134,15 +1510,33 @@ export function ChatEntry({ state }: { state: AppState }) {
                   </span>
                 </div>
               ))}
-              {(msg.content || (busy && msg.role === 'orcha' && index === messages.length - 1)) && (
+              {(msg.liveWork) ? (
+                <CompanyLiveProgress
+                  intro={msg.content}
+                  previewUrl={msg.previewUrl}
+                  running={runtimeRunning}
+                />
+              ) : (renderedContent || (busy && msg.role === 'orcha' && index === messages.length - 1)) && (
                 <p>
-                  {msg.content}
+                  {renderedContent}
                   {busy && msg.role === 'orcha' && index === messages.length - 1 && (
                     <span className="chat-caret" aria-hidden="true" />
                   )}
                 </p>
               )}
-            </article>
+              {!msg.liveWork && msg.previewUrl && (
+                <div className="chat-preview-wrap">
+                  <iframe
+                    className="chat-preview"
+                    title="Company preview"
+                    src={msg.previewUrl}
+                    sandbox="allow-scripts allow-same-origin"
+                  />
+                  <a className="chat-preview-link" href={msg.previewUrl} target="_blank" rel="noreferrer">Open preview</a>
+                </div>
+              )}
+              </article>
+            })()
           ))}
           {reportId && (
             <div className="chat-report" role="dialog" aria-label="Report AI content">

@@ -73,6 +73,11 @@ function ChoiceGrid({
               onClick={() => onToggle(item.id)}
             >
               <b>{item.title}</b>
+              <span className="co-intent-state" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="12" height="12">
+                  <path d="m3.3 8.2 2.8 2.8 6.3-6.1" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
             </button>
             {item.id === 'other' && (
               <>
@@ -133,7 +138,14 @@ function FieldBar({ fill, pct }: { fill: number; pct: number }) {
   const [href, setHref] = useState('')
 
   useEffect(() => {
-    setHref(getBlueFieldHref())
+    const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void }
+    const run = () => setHref(getBlueFieldHref())
+    if (typeof win.requestIdleCallback === 'function') {
+      const id = win.requestIdleCallback(run, { timeout: 2500 })
+      return () => win.cancelIdleCallback?.(id)
+    }
+    const id = window.setTimeout(run, 0)
+    return () => window.clearTimeout(id)
   }, [])
 
   useEffect(() => {
@@ -213,7 +225,7 @@ function FieldBar({ fill, pct }: { fill: number; pct: number }) {
       aria-valuemax={100}
       aria-valuenow={pct}
     >
-      <span className="co-bar-clip" style={{ width: `${fill}%` }}>
+      <span className="co-bar-clip" style={{ transform: `scaleX(${fill / 100})` }}>
         <svg ref={picRef} className="co-bar-pic" aria-hidden="true">
           <defs>
             <pattern
@@ -378,7 +390,7 @@ export function CompanyOnboard({
       {current.kind === 'cards' && (
         <section key={current.id} className="co-step" data-dir={dir}>
           <h1>{current.title}</h1>
-          {current.id === 'shape' && <p className="co-lead">Pick all that apply.</p>}
+          {current.id === 'shape' && <p className="co-lead">Choose everything that matters. You can pick more than one.</p>}
           <ChoiceGrid
             items={current.items}
             values={selected}
@@ -389,7 +401,7 @@ export function CompanyOnboard({
           />
           <div className="co-row">
             <button type="button" className="co-go" disabled={!canCards} onClick={goNext}>
-              Continue
+              Continue{selected.length > 0 ? ` · ${selected.length} selected` : ''}
             </button>
           </div>
         </section>

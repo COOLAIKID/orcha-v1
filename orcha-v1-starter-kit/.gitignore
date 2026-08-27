@@ -1,0 +1,6 @@
+orcha.local.env
+.env
+ui/.env
+var/
+__pycache__/
+*.pyc

@@ -27,6 +27,8 @@ export type Business = {
   brief: string
   createdAt: number
   chats: ChatThread[]
+  /** Temporary mapping for the in-memory local API; recreated after an API restart. */
+  runtimeCompanyId?: string
 }
 
 export type Account = {
@@ -48,6 +50,7 @@ export type Prefs = {
   language: 'auto' | 'en'
   motion: 'system' | 'reduce' | 'full'
   density: 'comfortable' | 'compact'
+  gridDensity: 'calm' | 'detailed'
   submitOnEnter: boolean
   slashHints: boolean
   showTools: boolean
@@ -96,6 +99,7 @@ export function emptyPrefs(): Prefs {
     language: 'auto',
     motion: 'system',
     density: 'comfortable',
+    gridDensity: 'calm',
     submitOnEnter: true,
     slashHints: true,
     showTools: true,
@@ -115,6 +119,7 @@ function readPrefs(raw: unknown): Prefs {
     language: next.language === 'en' ? 'en' : 'auto',
     motion: next.motion === 'reduce' || next.motion === 'full' ? next.motion : 'system',
     density: next.density === 'compact' ? 'compact' : 'comfortable',
+    gridDensity: next.gridDensity === 'detailed' ? 'detailed' : 'calm',
     submitOnEnter: next.submitOnEnter !== false,
     slashHints: next.slashHints !== false,
     showTools: next.showTools !== false,
@@ -319,6 +324,14 @@ export function startBusiness(name: string, brief: string) {
   }
   persist()
   return { business, chat }
+}
+
+export function setRuntimeCompanyId(businessId: string, runtimeCompanyId: string | undefined) {
+  const business = cache.businesses.find((item) => item.id === businessId)
+  if (!business) return
+  business.runtimeCompanyId = runtimeCompanyId
+  cache = { ...cache, businesses: [...cache.businesses] }
+  persist()
 }
 
 export function newChat(open = false) {

@@ -1,0 +1,65 @@
+services:
+  api:
+    # The base file already binds the API to host loopback. Keep it there so a
+    # reverse proxy or cloudflared process on this machine is the only public
+    # ingress point.
+    restart: always
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 1g
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    expose:
+      - "8080"
+    environment:
+      ORCHA_REQUIRE_WORKER_AUTH: "true"
+      ORCHA_WORKER_AUTH_TOKEN: ${ORCHA_WORKER_AUTH_TOKEN:?Set ORCHA_WORKER_AUTH_TOKEN for the hosted profile}
+
+  cockpit:
+    build:
+      context: ..
+      dockerfile: infra/ui.Dockerfile
+    restart: always
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 256m
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+      - /var/cache/nginx:rw,noexec,nosuid,nodev
+      - /var/log/nginx:rw,noexec,nosuid,nodev
+    ports:
+      - "127.0.0.1:3000:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  worker:
+    # The worker is reachable only on the private Compose network; never add a
+    # ports: entry here. Its workspace volume is the only durable write area.
+    restart: always
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 1g
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    environment:
+      ORCHA_REQUIRE_WORKER_AUTH: "true"
+      ORCHA_WORKER_AUTH_TOKEN: ${ORCHA_WORKER_AUTH_TOKEN:?Set ORCHA_WORKER_AUTH_TOKEN for the hosted profile}

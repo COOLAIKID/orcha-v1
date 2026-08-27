@@ -18,7 +18,8 @@
 - Software product planning, repository creation, coding, testing, preview deployment.
 - Research using explicitly enabled web or document tools.
 - Persistent company memory, task history, artifacts, and decisions.
-- Per-agent internal inboxes; email identity as a future adapter with no external send by default.
+- Per-agent internal inboxes with deterministic `.local` address-like identities;
+  external email remains a future adapter with no external send by default.
 - Live HQ, activity feed, “While you were away,” and Evolution views.
 - Local Only, Company Vault, and Shareable file tiers.
 - Orcha Studio inspection and bounded configuration.

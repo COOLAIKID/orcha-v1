@@ -1,4 +1,4 @@
-import { StrictMode, useState } from 'react'
+import { Component, StrictMode, useState, type ErrorInfo, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Shell } from './components/Shell'
 import './styles.css'
@@ -7,6 +7,27 @@ import { ChatEntry } from './views/ChatEntry'
 import { LegalPage } from './views/LegalDoc'
 import { Teams } from './views/Teams'
 import { LogoCreate } from './views/LogoCreate'
+
+class LoadError extends Component<{ children: ReactNode }, { message: string | null }> {
+  state = { message: null as string | null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { message: error.message || 'The chat surface failed to load.' }
+  }
+
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    console.error(error)
+  }
+
+  render() {
+    if (!this.state.message) return this.props.children
+    return (
+      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, background: '#212121', color: '#ececec', fontFamily: 'DM Sans, sans-serif' }}>
+        <p style={{ margin: 0, maxWidth: 420, textAlign: 'center', lineHeight: 1.5 }}>{this.state.message} Refresh the page. If it stays blank, hard-refresh http://127.0.0.1:5175/</p>
+      </main>
+    )
+  }
+}
 
 function App() {
   const [view, setView] = useState<View>('onboarding')
@@ -61,4 +82,4 @@ function App() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>)
+createRoot(document.getElementById('root')!).render(<StrictMode><LoadError><App /></LoadError></StrictMode>)

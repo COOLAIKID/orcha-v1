@@ -16,7 +16,14 @@ declare module 'node:path' {
 declare module 'node:buffer' {
   export const Buffer: {
     concat(list: readonly Uint8Array[]): { toString(encoding: 'utf8'): string }
+    from(data: string, encoding?: 'utf8' | 'hex'): Uint8Array
   }
+}
+declare module 'node:crypto' {
+  export function createHash(algorithm: string): {
+    update(data: string): { digest(encoding: 'hex'): string }
+  }
+  export function timingSafeEqual(left: Uint8Array, right: Uint8Array): boolean
 }
 declare module 'node:child_process' {
   type Stream = { on(event: 'data', listener: (chunk: { toString(enc: string): string }) => void): void }

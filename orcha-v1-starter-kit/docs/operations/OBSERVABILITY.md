@@ -2,7 +2,11 @@
 
 ## Correlation
 
-Every request, task, agent run, tool call, artifact, and experiment carries `company_id`, `objective_id`, `task_id`, `run_id`, and `trace_id`.
+The local event envelope carries `company_id`, `aggregate_id`, `sequence`, and
+`actor`. Its bounded `data` includes `companyId`, `summary`, and the relevant
+`taskId`, `agentId`, `runId`, `role`, or artifact name. The current SQLite
+runtime does not claim an `objective_id` or distributed `trace_id` on every
+event; those remain hosted-observability additions.
 
 ## Signals
 

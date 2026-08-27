@@ -1,0 +1,36 @@
+# Keep secrets and machine state out of every image build context.
+.env
+.env.*
+!.env.example
+ui/.env
+ui/.env.*
+!ui/.env.example
+orcha.local.env
+orcha.local.env.*
+
+# Local state, dependencies, build output, and source-control metadata.
+var/
+node_modules/
+ui/node_modules/
+ui/dist/
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.db
+*.log
+*.pid
+*.zip
+.git/
+.codex/
+.cursor/
+.agents/
+_channel-archive/
+.crew-watch-state.json
+
+# The runtime images only need source and package manifests.
+docs/
+tests/
+scripts/
+*.md
+!README.md

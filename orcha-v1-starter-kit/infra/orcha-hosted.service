@@ -1,0 +1,18 @@
+[Unit]
+Description=Orcha hosted control plane
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/orcha
+RemainAfterExit=yes
+ExecStartPre=/usr/bin/docker compose --env-file /etc/orcha/orcha.env -f /opt/orcha/infra/docker-compose.yml -f /opt/orcha/infra/docker-compose.hosted.yml config --quiet
+ExecStart=/usr/bin/docker compose --env-file /etc/orcha/orcha.env -f /opt/orcha/infra/docker-compose.yml -f /opt/orcha/infra/docker-compose.hosted.yml up -d
+ExecStop=/usr/bin/docker compose --env-file /etc/orcha/orcha.env -f /opt/orcha/infra/docker-compose.yml -f /opt/orcha/infra/docker-compose.hosted.yml down
+TimeoutStartSec=0
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

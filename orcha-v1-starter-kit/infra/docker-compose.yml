@@ -4,10 +4,76 @@ services:
       context: ..
       dockerfile: infra/Dockerfile
     ports:
-      - "8080:8080"
-    env_file:
-      - ../.env.example
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    environment:
+      # Compose must use explicit process/container configuration. The example
+      # inventory is documentation, not a runtime env file, and the API must
+      # never attempt to discover a developer's local env file in a container.
+      ORCHA_ENV: ${ORCHA_ENV:-production}
+      ORCHA_DISABLE_LOCAL_ENV: "true"
+      ORCHA_DATABASE_URL: sqlite:////var/lib/orcha/orcha.db
+      ORCHA_FEEDBACK_DIR: /var/lib/orcha/feedback
+      ORCHA_SANDBOX_PROVIDER: cloud
+      ORCHA_WORKER_URL: http://worker:8765
+      ORCHA_WORKER_AUTH_TOKEN: ${ORCHA_WORKER_AUTH_TOKEN:-}
+      ORCHA_REQUIRE_WORKER_AUTH: ${ORCHA_REQUIRE_WORKER_AUTH:-false}
+      ORCHA_AGENT_PROVIDER: ${ORCHA_AGENT_PROVIDER:-}
+      ORCHA_AGENT_MODEL: ${ORCHA_AGENT_MODEL:-}
+      ORCHA_AGENT_OPENROUTER_MODEL: ${ORCHA_AGENT_OPENROUTER_MODEL:-}
+      ORCHA_AGENT_GEMINI_MODEL: ${ORCHA_AGENT_GEMINI_MODEL:-}
+      ORCHA_AGENT_GROQ_MODEL: ${ORCHA_AGENT_GROQ_MODEL:-}
+      ORCHA_AGENT_OPENAI_MODEL: ${ORCHA_AGENT_OPENAI_MODEL:-}
+      ORCHA_AGENT_FALLBACK_PROVIDERS: ${ORCHA_AGENT_FALLBACK_PROVIDERS:-}
+      ORCHA_AGENT_KEY_COOLDOWN_SECONDS: ${ORCHA_AGENT_KEY_COOLDOWN_SECONDS:-60}
+      ORCHA_AGENT_INPUT_USD_PER_1K: ${ORCHA_AGENT_INPUT_USD_PER_1K:-0}
+      ORCHA_AGENT_OUTPUT_USD_PER_1K: ${ORCHA_AGENT_OUTPUT_USD_PER_1K:-0}
+      ORCHA_AGENT_MAX_ESTIMATED_RUN_USD: ${ORCHA_AGENT_MAX_ESTIMATED_RUN_USD:-0.25}
+      ORCHA_MAX_AGENT_RUNS_PER_DAY: ${ORCHA_MAX_AGENT_RUNS_PER_DAY:-40}
+      ORCHA_MAX_COMPANY_BUDGET_USD: ${ORCHA_MAX_COMPANY_BUDGET_USD:-25}
+      ORCHA_APPROVAL_MODE: ${ORCHA_APPROVAL_MODE:-consequential-only}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_API_KEYS: ${OPENROUTER_API_KEYS:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_KEYS: ${GEMINI_API_KEYS:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_KEYS: ${OPENAI_API_KEYS:-}
+    init: true
+    stop_grace_period: 30s
     volumes:
       - orcha-data:/var/lib/orcha
+    depends_on:
+      worker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: ["uvicorn", "orcha.worker.app:app", "--host", "0.0.0.0", "--port", "8765"]
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    environment:
+      ORCHA_WORKSPACE_ROOT: /var/lib/orcha/workspaces
+      ORCHA_WORKER_AUTH_TOKEN: ${ORCHA_WORKER_AUTH_TOKEN:-}
+      ORCHA_REQUIRE_WORKER_AUTH: ${ORCHA_REQUIRE_WORKER_AUTH:-false}
+    expose:
+      - "8765"
+    volumes:
+      - orcha-workspaces:/var/lib/orcha/workspaces
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
 volumes:
   orcha-data:
+  orcha-workspaces:

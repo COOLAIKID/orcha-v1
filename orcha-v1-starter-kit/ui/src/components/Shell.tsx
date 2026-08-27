@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { AppState, View } from '../types'
 import {
   chatsOf,
@@ -14,9 +14,15 @@ import {
   subscribeWorkspace,
   toggleBusinessOpen,
 } from '../workspace'
+import { gridSnapshot, subscribeGrid } from '../agentGrid/adapter.ts'
+import { openAgentGrid } from '../agentGrid/open.ts'
+import { startDiagnosticCapture } from '../diagnostics'
+import { FeedbackSheet } from './FeedbackSheet'
 import { OrchaMark } from './OrchaMark'
 import { SideSlider } from './SideSlider'
 import { Button } from './Wire'
+
+const AgentGrid = lazy(() => import('../agentGrid/AgentGrid.tsx').then((mod) => ({ default: mod.AgentGrid })))
 
 const NAV: { id: View; label: string }[] = [
   { id: 'onboarding', label: 'Onboarding' },
@@ -114,16 +120,29 @@ function ChatShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
   const [setOpenMenu, setSetOpenMenu] = useState(false)
+  const [gridOpen, setGridOpen] = useState(false)
+  const [gridClosing, setGridClosing] = useState(false)
+  const [gridFocus, setGridFocus] = useState<string | null>(null)
+  const [gridInspect, setGridInspect] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [gridSynthetic, setGridSynthetic] = useState(() => gridSnapshot().synthetic)
   const [room, setRoom] = useState(getWorkspace)
   const [pane, setPane] = useState<'chats' | 'tools'>(() => (getWorkspace().side.pane === 'tools' ? 'tools' : 'chats'))
   const markT = useRef(0)
   const sideT = useRef(0)
   const newAnim = useRef(0)
   const setAnim = useRef(0)
+  const gridTimer = useRef<number | null>(null)
+  const gridCloseTimer = useRef<number | null>(null)
+  const gridClosingRef = useRef(false)
+  const gridOpenRef = useRef(false)
   const [markOpen, setMarkOpen] = useState(0)
   const sideRef = useRef<HTMLElement>(null)
+  const brandRef = useRef<HTMLButtonElement>(null)
+  const sideReturnFocusRef = useRef<HTMLElement | null>(null)
   const newIconRef = useRef<SVGSVGElement>(null)
   const newMenuRef = useRef<HTMLDivElement>(null)
+  const newWrapRef = useRef<HTMLDivElement>(null)
   const setMenuRef = useRef<HTMLDivElement>(null)
 
   const startNew = (kind: 'chat' | 'company') => {
@@ -157,12 +176,40 @@ function ChatShell({ children }: { children: ReactNode }) {
     }
     const tick = (now: number) => {
       const u = Math.min(1, (now - start) / dur)
-      const s = 1 - (1 - u) ** 3
+      // The return journey holds for a beat before leaving the canvas, so
+      // closing the menu reads as a deliberate exit rather than a jump.
+      const s = open
+        ? 1 - (1 - u) ** 3
+        : u < 0.5 ? 4 * u ** 3 : 1 - (-2 * u + 2) ** 3 / 2
       place(s)
       if (u < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
+  }, [open])
+
+  useEffect(() => {
+    const side = sideRef.current
+    if (!side) return
+
+    // The rail is animated off-canvas instead of conditionally unmounted so
+    // its exit motion can finish. Inert makes that visual state truthful to
+    // keyboard and assistive-technology users as well.
+    side.toggleAttribute('inert', !open)
+    if (open) {
+      const active = document.activeElement
+      sideReturnFocusRef.current = active instanceof HTMLElement ? active : null
+      const focusId = window.requestAnimationFrame(() => {
+        const first = side.querySelector<HTMLElement>('[tabindex="0"], button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled])')
+        first?.focus({ preventScroll: true })
+      })
+      return () => window.cancelAnimationFrame(focusId)
+    }
+
+    if (document.activeElement instanceof HTMLElement && side.contains(document.activeElement)) {
+      ;(sideReturnFocusRef.current ?? brandRef.current)?.focus({ preventScroll: true })
+    }
+    sideReturnFocusRef.current = null
   }, [open])
 
   useEffect(() => {
@@ -173,6 +220,81 @@ function ChatShell({ children }: { children: ReactNode }) {
   }, [open])
 
   useEffect(() => subscribeWorkspace(() => setRoom({ ...getWorkspace() })), [])
+
+  useEffect(() => {
+    startDiagnosticCapture()
+  }, [])
+
+  useEffect(() => subscribeGrid(() => setGridSynthetic(gridSnapshot().synthetic)), [])
+
+  useEffect(() => {
+    gridOpenRef.current = gridOpen
+  }, [gridOpen])
+
+  useEffect(() => () => {
+    if (gridTimer.current !== null) window.clearTimeout(gridTimer.current)
+    if (gridCloseTimer.current !== null) window.clearTimeout(gridCloseTimer.current)
+  }, [])
+
+  const requestGridClose = () => {
+    if (gridClosingRef.current) return
+    gridClosingRef.current = true
+    setGridClosing(true)
+    setGridFocus(null)
+    setGridInspect(false)
+    if (gridCloseTimer.current !== null) window.clearTimeout(gridCloseTimer.current)
+    if (prefersReducedMotion()) {
+      gridClosingRef.current = false
+      setGridClosing(false)
+      setGridOpen(false)
+      return
+    }
+    gridCloseTimer.current = window.setTimeout(() => {
+      gridCloseTimer.current = null
+      gridClosingRef.current = false
+      setGridClosing(false)
+      setGridOpen(false)
+    }, 380)
+  }
+
+  useEffect(() => {
+    const onGrid = (event: Event) => {
+      const detail = event instanceof CustomEvent
+        ? (event.detail as { open?: boolean; agentId?: string; inspect?: boolean } | undefined)
+        : undefined
+      if (detail?.open === false) {
+        if (gridTimer.current !== null) window.clearTimeout(gridTimer.current)
+        gridTimer.current = null
+        requestGridClose()
+        return
+      }
+      if (gridCloseTimer.current !== null) {
+        window.clearTimeout(gridCloseTimer.current)
+        gridCloseTimer.current = null
+      }
+      gridClosingRef.current = false
+      setGridClosing(false)
+      setNewOpen(false)
+      setSetOpenMenu(false)
+      setGridFocus(detail?.agentId ?? null)
+      setGridInspect(Boolean(detail?.inspect))
+
+      // Give the rail its full close motion before showing the workspace.
+      // When the grid is already behind the open rail, it stays visible.
+      if (gridTimer.current !== null) window.clearTimeout(gridTimer.current)
+      setOpen(false)
+      if (gridOpenRef.current || sideT.current < 0.01 || prefersReducedMotion()) {
+        setGridOpen(true)
+        return
+      }
+      gridTimer.current = window.setTimeout(() => {
+        setGridOpen(true)
+        gridTimer.current = null
+      }, 420)
+    }
+    window.addEventListener('orcha:agent-grid', onGrid)
+    return () => window.removeEventListener('orcha:agent-grid', onGrid)
+  }, [])
 
   useEffect(() => {
     const icon = newIconRef.current
@@ -208,6 +330,17 @@ function ChatShell({ children }: { children: ReactNode }) {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
+  }, [newOpen])
+
+  useEffect(() => {
+    if (!newOpen) return
+    const onDown = (event: PointerEvent) => {
+      const wrap = newWrapRef.current
+      if (wrap?.contains(event.target as Node)) return
+      setNewOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
   }, [newOpen])
 
   useEffect(() => {
@@ -247,7 +380,25 @@ function ChatShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && !gridOpen) {
+        const side = sideRef.current
+        if (!side) return
+        const focusable = Array.from(side.querySelectorAll<HTMLElement>('[tabindex="0"], button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled])'))
+          .filter((element) => element.tabIndex >= 0 && element.getClientRects().length > 0 && !element.closest('[aria-hidden="true"]'))
+        if (!focusable.length) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus({ preventScroll: true })
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus({ preventScroll: true })
+        }
+        return
+      }
       if (event.key !== 'Escape') return
+      if (gridOpen) return
       if (newOpen) {
         setNewOpen(false)
         return
@@ -260,21 +411,26 @@ function ChatShell({ children }: { children: ReactNode }) {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open, newOpen, setOpenMenu])
+  }, [open, newOpen, setOpenMenu, gridOpen])
 
   const pickPane = (next: 'chats' | 'tools') => {
     setNewOpen(false)
     setPane(next)
     setSidePane(next)
+    if (next === 'chats') {
+      setGridOpen(false)
+      setGridFocus(null)
+      setGridInspect(false)
+    }
   }
 
   return (
-    <div className={`app chat-mode${open ? ' has-side' : ''}`}>
-      <aside ref={sideRef} className="chat-side" aria-hidden={!open}>
+    <div className={`app chat-mode${open ? ' has-side' : ''}${gridOpen ? ' has-agent-grid' : ''}`}>
+      <aside id="chat-side-panel" ref={sideRef} className="chat-side" aria-label="Workspace menu" aria-hidden={!open} inert={!open || undefined}>
         <div className="chat-side-top">
           <SideSlider value={pane} onChange={pickPane} />
           {pane === 'chats' && (
-          <div className={`chat-side-new-wrap${newOpen ? ' is-open' : ''}`}>
+          <div ref={newWrapRef} className={`chat-side-new-wrap${newOpen ? ' is-open' : ''}`}>
             <button
               type="button"
               className={`chat-side-new${newOpen ? ' is-open' : ''}`}
@@ -323,13 +479,27 @@ function ChatShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 role="tab"
-                id="side-tab-agents"
+                id="side-tab-agentgrid"
                 aria-selected
-                aria-controls="side-pane-agents"
                 className="chat-side-tools-tab is-on"
-                onClick={() => setToolTab('agents')}
+                onClick={() => {
+                  setToolTab('agents')
+                  openAgentGrid()
+                }}
               >
-                Agents
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                  <circle cx="6" cy="7" r="2.2" stroke="currentColor" strokeWidth="1.6" />
+                  <circle cx="18" cy="7" r="2.2" stroke="currentColor" strokeWidth="1.6" />
+                  <circle cx="12" cy="17" r="2.2" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="m7.8 8.3 2.7 6.1M16.2 8.3l-2.7 6.1M8.3 7h7.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <span>
+                  <b>Agent Grid</b>
+                  <small>{gridSynthetic ? 'Inspect the work in motion · Demo' : 'Live company graph'}</small>
+                </span>
+                <svg className="chat-side-tools-arrow" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                  <path fill="currentColor" d="m9 5.6 6.4 6.4L9 18.4l-1.4-1.4 5-5-5-5z" />
+                </svg>
               </button>
             </div>
           )}
@@ -340,9 +510,6 @@ function ChatShell({ children }: { children: ReactNode }) {
           role="tabpanel"
           aria-labelledby={pane === 'chats' ? 'side-tab-chats' : 'side-tab-tools'}
         >
-          {pane === 'tools' && (
-            <div id="side-pane-agents" className="chat-side-group" role="tabpanel" aria-labelledby="side-tab-agents" />
-          )}
           {pane === 'chats' && listedBusinesses().length > 0 && (
             <div className="chat-side-group">
               {listedBusinesses().map((business) => {
@@ -501,16 +668,42 @@ function ChatShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             className="chat-brand"
+            ref={brandRef}
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
-            onClick={() => setOpen((value) => !value)}
+            aria-controls="chat-side-panel"
+            onClick={() => {
+              if (gridOpen) {
+                setOpen((value) => !value)
+                return
+              }
+              setOpen((value) => !value)
+            }}
           >
             <OrchaMark size={24} open={markOpen} />
             <strong>orcha</strong>
           </button>
+          <div className="chat-top-actions">
+            <button type="button" className="chat-feedback" aria-label="Open feedback" onClick={() => setFeedbackOpen(true)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.8A2.8 2.8 0 0 1 7.8 3h8.4A2.8 2.8 0 0 1 19 5.8v6.4a2.8 2.8 0 0 1-2.8 2.8H11l-3.8 3v-3H7.8A2.8 2.8 0 0 1 5 12.2V5.8Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>
+            </button>
+          </div>
         </header>
-        <div className="page">{children}</div>
+        <div className="page">
+          {children}
+          {gridOpen && (
+            <Suspense fallback={null}>
+            <AgentGrid
+              focusId={gridFocus}
+              inspectOnOpen={gridInspect}
+              closing={gridClosing}
+              onClose={requestGridClose}
+            />
+            </Suspense>
+          )}
+        </div>
       </div>
+      {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
     </div>
   )
 }

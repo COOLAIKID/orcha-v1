@@ -11,8 +11,8 @@ function rubber(over: number, dim: number) {
   if (over === 0 || dim <= 0) return 0
   const sign = over < 0 ? -1 : 1
   const x = Math.abs(over)
-  const banded = (1 - 1 / (x * 0.55 / dim + 1)) * dim * 0.32
-  return sign * Math.min(16, banded)
+  const banded = (1 - 1 / (x * 0.55 / dim + 1)) * dim * 0.42
+  return sign * Math.min(22, banded)
 }
 
 function ChatIcon() {
@@ -37,9 +37,10 @@ function ToolsIcon() {
 }
 
 export function SideSlider({ value, onChange }: { value: Pane; onChange: (next: Pane) => void }) {
+  const hostRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const thumbRef = useRef<HTMLSpanElement>(null)
-  const metrics = useRef({ pad: 3, travel: 0, baseW: 0 })
+  const metrics = useRef({ pad: 3, travel: 0, baseW: 0, restW: 0 })
   const visual = useRef({ p: value === 'tools' ? 1 : 0, stretch: 0 })
   const drag = useRef({
     active: false,
@@ -57,22 +58,35 @@ export function SideSlider({ value, onChange }: { value: Pane; onChange: (next: 
   const [grabbing, setGrabbing] = useState(false)
 
   const measure = () => {
-    const track = trackRef.current
-    if (!track) return
+    const host = hostRef.current
+    if (!host) return
     const pad = 3
-    const inner = Math.max(0, track.getBoundingClientRect().width - pad * 2)
-    metrics.current = { pad, travel: inner / 2, baseW: inner / 2 }
+    const restW = host.clientWidth
+    const inner = Math.max(0, restW - pad * 2)
+    metrics.current = { pad, restW, travel: inner / 2, baseW: inner / 2 }
   }
 
   const paint = () => {
+    const track = trackRef.current
     const thumb = thumbRef.current
-    if (!thumb) return
-    const { pad, travel, baseW } = metrics.current
-    if (baseW <= 0) return
+    if (!track || !thumb) return
+    const { pad, restW, baseW } = metrics.current
+    if (restW <= 0) return
     const { p, stretch } = visual.current
+    const extra = Math.abs(stretch)
+    if (extra < 0.1) {
+      track.style.width = ''
+      track.style.marginLeft = ''
+    } else {
+      // Width always grows to the right; pull left by shifting margin so the
+      // opposite edge stays put and the pill rubber-bands toward the drag.
+      track.style.width = `${restW + extra}px`
+      track.style.marginLeft = `${stretch < 0 ? stretch : 0}px`
+    }
+    const half = baseW + extra / 2
     thumb.style.left = `${pad}px`
-    thumb.style.width = `${baseW + Math.abs(stretch)}px`
-    thumb.style.transform = `translateX(${p * travel + Math.min(0, stretch)}px)`
+    thumb.style.width = `${half}px`
+    thumb.style.transform = `translateX(${p * half}px)`
   }
 
   const settle = (next: Pane) => {
@@ -109,13 +123,13 @@ export function SideSlider({ value, onChange }: { value: Pane; onChange: (next: 
   useLayoutEffect(() => {
     measure()
     paint()
-    const track = trackRef.current
-    if (!track || typeof ResizeObserver === 'undefined') return
+    const host = hostRef.current
+    if (!host || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(() => {
       measure()
       paint()
     })
-    ro.observe(track)
+    ro.observe(host)
     return () => {
       ro.disconnect()
       cancelAnimationFrame(snapRaf.current)
@@ -198,49 +212,51 @@ export function SideSlider({ value, onChange }: { value: Pane; onChange: (next: 
   }
 
   return (
-    <div
-      ref={trackRef}
-      className={`chat-side-slider${value === 'tools' ? ' is-tools' : ''}${grabbing ? ' is-grabbing' : ''}`}
-      role="tablist"
-      aria-label="Sidebar"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onKeyDown={(event) => {
-        if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
-          event.preventDefault()
-          settle(event.key === 'ArrowRight' ? 'tools' : 'chats')
-        }
-      }}
-    >
-      <span ref={thumbRef} className="chat-side-slider-thumb" aria-hidden="true" />
-      <button
-        type="button"
-        role="tab"
-        id="side-tab-chats"
-        aria-controls="side-pane-chats"
-        aria-selected={value === 'chats'}
-        className={`chat-side-slider-btn${hot === 'chats' ? ' is-on' : ''}`}
-        tabIndex={value === 'chats' ? 0 : -1}
-        onClick={() => settle('chats')}
+    <div ref={hostRef} className="chat-side-slider-host">
+      <div
+        ref={trackRef}
+        className={`chat-side-slider${value === 'tools' ? ' is-tools' : ''}${grabbing ? ' is-grabbing' : ''}`}
+        role="tablist"
+        aria-label="Sidebar"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+            event.preventDefault()
+            settle(event.key === 'ArrowRight' ? 'tools' : 'chats')
+          }
+        }}
       >
-        <ChatIcon />
-        Chats
-      </button>
-      <button
-        type="button"
-        role="tab"
-        id="side-tab-tools"
-        aria-controls="side-pane-tools"
-        aria-selected={value === 'tools'}
-        className={`chat-side-slider-btn${hot === 'tools' ? ' is-on' : ''}`}
-        tabIndex={value === 'tools' ? 0 : -1}
-        onClick={() => settle('tools')}
-      >
-        <ToolsIcon />
-        Tools
-      </button>
+        <span ref={thumbRef} className="chat-side-slider-thumb" aria-hidden="true" />
+        <button
+          type="button"
+          role="tab"
+          id="side-tab-chats"
+          aria-controls="side-pane-chats"
+          aria-selected={value === 'chats'}
+          className={`chat-side-slider-btn${hot === 'chats' ? ' is-on' : ''}`}
+          tabIndex={value === 'chats' ? 0 : -1}
+          onClick={() => settle('chats')}
+        >
+          <ChatIcon />
+          Chats
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="side-tab-tools"
+          aria-controls="side-pane-tools"
+          aria-selected={value === 'tools'}
+          className={`chat-side-slider-btn${hot === 'tools' ? ' is-on' : ''}`}
+          tabIndex={value === 'tools' ? 0 : -1}
+          onClick={() => settle('tools')}
+        >
+          <ToolsIcon />
+          Tools
+        </button>
+      </div>
     </div>
   )
 }

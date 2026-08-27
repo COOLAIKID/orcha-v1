@@ -26,7 +26,7 @@ Audit Log + Cost Meter       Capability Broker
 
 ## Persistence model
 
-Use Postgres in production, SQLite for local development. Use object storage for artifacts and a queue/event stream for execution. The scaffold uses in-memory repositories so the domain contracts are easy to replace.
+Use Postgres in production, SQLite for local development. Use object storage for artifacts and a queue/event stream for execution. The current local implementation uses SQLite for companies, tasks, agents, internal inbox messages, runs, usage, experiments, and sequenced events; production services can replace that store boundary without changing the domain contracts. Agent inboxes have stable `.local` address-like identifiers for internal routing only; an external email adapter is a future capability and is not configured.
 
 ## Always-on VM
 

@@ -1,0 +1,6 @@
+export { AgentGrid } from './AgentGrid.tsx'
+export { closeAgentGrid, openAgentGrid } from './open.ts'
+export { ingest, ingestMany, ingestReal, ingestManyReal, resetGrid, subscribeGrid, gridSnapshot } from './adapter.ts'
+export { ensureAgentGridDemo, pauseAgentGridDemo, playAgentGridDemo, restartAgentGridDemo } from './demo.ts'
+export { gridStore } from './store.ts'
+export type { GridAgent, GridSnapshot, RuntimeInbound } from './types.ts'

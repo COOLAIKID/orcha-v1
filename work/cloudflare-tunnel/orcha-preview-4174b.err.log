@@ -1,0 +1,6 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./src/chatPlugin" without a file extension (vite.config.ts:3:28). Add the file extension
+  - import "./chatReply" without a file extension (src/chatPlugin.ts:3:30). Add the file extension
+  - import "./smartAiRouter" without a file extension (src/chatPlugin.ts:4:57). Add the file extension
+  - import "./smartAiRouter" without a file extension (src/chatPlugin.ts:79:21). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.

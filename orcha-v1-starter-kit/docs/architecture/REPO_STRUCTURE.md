@@ -14,7 +14,14 @@ packages/
   policy/                  # capabilities, file tiers, approvals
 infra/
   docker-compose.yml
+  docker-compose.hosted.yml
+  HOSTED_DEPLOYMENT.md
+  ui.Dockerfile
+  nginx-hosted.conf
   vm/                      # image, provisioning, isolation notes
+scripts/
+  start-orcha-hosted.ps1
+  stop-orcha-hosted.ps1
 docs/
 tests/
 ```

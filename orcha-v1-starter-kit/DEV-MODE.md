@@ -13,6 +13,27 @@ control room for an always-on company running on a cloud VM.
 Consumer mode is a **lower altitude over the same data** — not a different system, not a
 different database, not a summary generated separately. The same events, unsummarised.
 
+## Current runtime delta — 25 Aug 2026
+
+The historical snapshot below describes the original operator prototype and
+its unrouted views. It is no longer accurate about the local runtime. Current
+implementation truth is `docs/operations/LOCAL_RUNTIME.md`:
+
+- Companies, tasks, agents, artifacts, safe handoffs, runs, usage, events, and
+  evidence-only experiments are durable in local SQLite.
+- A persistent scheduler executes role-scoped specialist work when the API has
+  a private provider configured; without one it records a truthful blocked
+  state rather than pretending work happened.
+- The dedicated `orcha-worker` WSL environment confines company workspaces,
+  static previews, process cancellation, and desktop/mobile browser QA.
+- Pause, resume, stop, explicit company deletion, cost/run limits, local
+  experiment promotion gates, and rollback records have API contracts.
+
+This does **not** make the dormant Live HQ, Evolution, Studio, Timeline,
+Recovery, or Assets UI routes reachable. The current consumer chat and Agent
+Grid remain the active surface. Hosted multi-tenant execution and real cloud
+VMs remain unbuilt.
+
 **The contract between the two modes:**
 
 > Consumer mode answers **what happened**. Dev mode answers **how, why, and on whose authority**.
@@ -55,10 +76,10 @@ the part that distinguishes dev mode from a read-only dashboard.
 | Roll back to baseline | Evolution | always available, never gated | written, unmounted |
 | Grant or revoke a capability | Studio · Permissions | inspect-first; propose, don't apply | table only, no action |
 | Change prompts, tools, workflows | Studio | gated behind evaluation + policy | placeholder |
-| Set the spend ceiling | `ORCHA_MAX_COMPANY_BUDGET_USD` | — | **declared, unenforced** |
-| Set approval posture | `ORCHA_APPROVAL_MODE` | — | **declared, unenforced** |
-| Pause or stop the company | `CompanyStatus.paused` exists in the model | — | **no endpoint** |
-| Kill switch | required by `VM_IMAGE_NOTES.md` | — | **no VM exists** |
+| Set the spend ceiling | `ORCHA_MAX_COMPANY_BUDGET_USD` | — | locally enforced before a model request |
+| Set approval posture | `ORCHA_APPROVAL_MODE` | — | declared; consequential external actions remain unavailable |
+| Pause or stop the company | local runtime API | — | `pause`, `resume`, and `stop` implemented |
+| Kill switch | local runtime stop | — | stops company-scoped tracked worker children; no cloud VM yet |
 
 Two principles govern every row:
 
@@ -180,8 +201,10 @@ Required image checks, verbatim:
 - kill switch reachable
 - preview server isolated from control-plane credentials
 
-**There is no VM, no image, and no isolation.** The `VM online · synthetic` pill in the shell is a
-hardcoded string. Every one of those checks is a requirement, not a status.
+There is no cloud VM/image lifecycle yet. The local development runtime does
+have a dedicated WSL worker with its own unprivileged user and disabled Windows
+drive automounting, but that is not a hosted isolation guarantee. Every cloud
+image check remains a production requirement, not a UI status.
 
 ### The container — written, never built
 `python:3.11-slim`, installs the package, exposes 8080, runs uvicorn. Compose mounts a named volume
@@ -237,9 +260,10 @@ the recovery view and undo — four surfaces, one source.
 
 **Verified working:** `POST /v1/companies` → `/start` → `/events` produces real sequenced,
 actor-attributed events.
-**Verified broken:** all in-memory. Restart and the company 404s.
-**Never built:** nothing executes. `plan()` creates tasks with status `queued`; no code path moves
-them off it. There are no subprocess, exec or sandbox primitives anywhere in `src/`.
+**Current local state:** SQLite persists companies and evidence through an API
+restart; a bounded scheduler moves eligible tasks through execution.
+**Still not built:** a cloud control plane, shared durable queue, VM fleet,
+external capability adapters, and automatic production deployment.
 
 ---
 
@@ -248,15 +272,16 @@ them off it. There are no subprocess, exec or sandbox primitives anywhere in `sr
 | | Real | Synthetic | Absent |
 |---|---|---|---|
 | Chat with a model | ✅ Smart AI Router (Gemini free → Groq fallback) | | |
-| Domain events | ✅ sequenced, actor-attributed | | |
-| Company lifecycle | ✅ create → start → events | | |
-| Task planning | partly — 2 keyword-matched templates | | |
-| Task execution | | | ❌ nothing runs |
-| Persistence | | | ❌ in-memory |
-| VM / isolation | | | ❌ spec only |
-| Capability enforcement | | | ❌ strings only |
-| Budget enforcement | | | ❌ declared only |
-| Dashboard data | | `data.ts` constants | |
+| Domain events | ✅ durable, sequenced, actor-attributed | | |
+| Company lifecycle | ✅ create → run → pause/resume/stop/delete | | |
+| Task planning | ✅ validated model plan with recorded safe fallback | | |
+| Task execution | ✅ bounded local specialist runner when an API provider is configured | blocked honestly without provider |
+| Persistence | ✅ local SQLite | | hosted multi-tenant database |
+| VM / isolation | ✅ dedicated local WSL worker | | cloud VM lifecycle |
+| Capability enforcement | ✅ role-scoped local tool allowlist | | external adapters/capability broker |
+| Budget enforcement | ✅ daily run and pre-call reserve locally | | multi-tenant billing |
+| Evolution record | ✅ gated local evidence/promotion/rollback API | | dormant tree UI/apply transaction |
+| Dashboard data | | `data.ts` constants remain Demo-labelled | |
 
 ---
 
